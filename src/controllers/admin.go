@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 	"github.com/jhonnydsl/clinify-backend/src/dtos"
 	"github.com/jhonnydsl/clinify-backend/src/services"
 	"github.com/jhonnydsl/clinify-backend/src/utils"
@@ -32,5 +33,41 @@ func (controller *AdminController) CreateAdmin(c *gin.Context) {
 	c.JSON(201, gin.H{
 		"message": "user admin created",
 		"id":		id,
+	})
+}
+
+func (controller *AdminController) CreateAppointment(c *gin.Context) {
+	var input dtos.AppointmentInput
+
+	ctx, cancel := utils.NewDBContext()
+	defer cancel()
+
+	clientIDValue, exists := c.Get("id")
+	if !exists {
+		c.JSON(401, gin.H{"error": "client id not found in context"})
+		return
+	}
+
+	clientID, err := uuid.Parse(clientIDValue.(string))
+	if err != nil {
+		c.JSON(400, gin.H{"error": "invalid client id"})
+		return
+	}
+
+	err = c.ShouldBindJSON(&input)
+	if err != nil {
+		c.JSON(utils.GetStatusCode(err), gin.H{"error": err.Error()})
+		return
+	}
+
+	id, err := controller.Service.CreateAppointment(ctx, input, clientID)
+	if err != nil {
+		c.JSON(utils.GetStatusCode(err), gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(201, gin.H{
+		"message": "appointment created",
+		"id": 		id,
 	})
 }

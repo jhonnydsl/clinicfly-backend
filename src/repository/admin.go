@@ -53,3 +53,27 @@ func (r *AdminRepository) FindAdminIDBySlug(ctx context.Context, slug string) (u
 
 	return id, nil
 }
+
+func (r *AdminRepository) CreateAppointment(ctx context.Context, input dtos.AppointmentInput, parsedDate, start, end time.Time, clientID uuid.UUID) (uuid.UUID, error) {
+	query := `INSERT INTO appointments (client_id, patient_id, date, start_time, end_time, status)
+	VALUES ($1, $2, $3, $4, $5, 'scheduled')
+	RETURNING id;`
+
+	var id uuid.UUID
+
+	err := DB.QueryRowContext(
+		ctx,
+		query,
+		clientID,
+		input.PatientID,
+		parsedDate,
+		start,
+		end,
+	).Scan(&id)
+	if err != nil {
+		utils.LogError("createAppointment repository (error in INSERT)", err)
+		return uuid.UUID{}, utils.InternalServerError("error creating appointment")
+	}
+
+	return id, nil
+}

@@ -60,3 +60,15 @@ func AuthMiddleware() gin.HandlerFunc {
 		c.Next()
 	}
 }
+
+func AdminOnlyMiddleware() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		role := c.GetString("role")
+		if role != "admin" {
+			c.JSON(403, gin.H{"error": "forbidden: admin only"})
+			c.Abort()
+			return 
+		}
+		c.Next()
+	}
+}

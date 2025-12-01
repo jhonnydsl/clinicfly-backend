@@ -42,3 +42,35 @@ func (services *AdminService) CreateAdmin(ctx context.Context, admin dtos.AdminI
 
 	return id, nil
 }
+
+func (service *AdminService) CreateAppointment(ctx context.Context, input dtos.AppointmentInput, clientID uuid.UUID) (uuid.UUID, error) {
+	parsedDate, err := utils.ParseDate(input.Date)
+	if err != nil {
+		utils.LogError("createAppointment service (error to parse date)", err)
+		return uuid.UUID{}, utils.BadRequestError("invalid format date")
+	}
+
+	start, err := utils.ParseTime(input.StartTime)
+	if err != nil {
+		utils.LogError("createAppoibtment service (error to parse star_time)", err)
+		return uuid.UUID{}, utils.BadRequestError("invalid format start_time")
+	}
+
+	end, err := utils.ParseTime(input.EndTime)
+	if err != nil {
+		utils.LogError("createAppointment service (error to parse end_time)", err)
+		return uuid.UUID{}, utils.BadRequestError("invalid format end_time")
+	}
+
+	/*if start.Before(end) {
+		return uuid.UUID{}, utils.BadRequestError("start_time must be before end_time")
+	}*/
+
+	id, err := service.Repo.CreateAppointment(ctx, input, parsedDate, start, end, clientID)
+	if err != nil {
+		utils.LogError("createAppointment service (error call to createAppointment repository)", err)
+		return uuid.UUID{}, utils.InternalServerError("error creating appointment")
+	}
+
+	return id, nil
+}

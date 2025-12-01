@@ -5,6 +5,7 @@ import (
 	"github.com/jhonnydsl/clinify-backend/src/controllers"
 	"github.com/jhonnydsl/clinify-backend/src/repository"
 	"github.com/jhonnydsl/clinify-backend/src/services"
+	"github.com/jhonnydsl/clinify-backend/src/utils/middlewares"
 )
 
 func SetupAdminRoutes(app *gin.RouterGroup) {
@@ -18,5 +19,10 @@ func SetupAdminRoutes(app *gin.RouterGroup) {
 	admin := app.Group("/admin")
 	{
 		admin.POST("", adminController.CreateAdmin)
+	}
+
+	protectedAdmin := app.Group("/admin", middlewares.AuthMiddleware(), middlewares.AdminOnlyMiddleware())
+	{
+		protectedAdmin.POST("/appointments", adminController.CreateAppointment)
 	}
 }
