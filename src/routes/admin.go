@@ -24,5 +24,6 @@ func SetupAdminRoutes(app *gin.RouterGroup) {
 	protectedAdmin := app.Group("/admin", middlewares.AuthMiddleware(), middlewares.AdminOnlyMiddleware())
 	{
 		protectedAdmin.POST("/appointments", adminController.CreateAppointment)
+		protectedAdmin.GET("/patients", adminController.GetPatients)		// => rota correta com paginação GET /api/v1/admin/patients?page=1&limit=10
 	}
 }

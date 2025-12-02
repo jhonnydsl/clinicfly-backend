@@ -77,3 +77,50 @@ func (r *AdminRepository) CreateAppointment(ctx context.Context, input dtos.Appo
 
 	return id, nil
 }
+
+func (r *AdminRepository) GetPatients(ctx context.Context, page int, limit int) ([]dtos.PatientOutput, int, error) {
+	query := `SELECT full_name, email, phone, birth_date FROM patients
+	ORDER BY full_name LIMIT $1 OFFSET $2`
+
+	offset := (page - 1) * limit
+
+	var total int
+	
+	err := DB.QueryRowContext(ctx, "SELECT COUNT(*) FROM patients").Scan(&total)
+	if err != nil {
+		return nil, 0, utils.InternalServerError("error getting total patients")
+	}
+	
+	rows, err := DB.QueryContext(ctx, query, limit, offset)
+	if err != nil {
+		utils.LogError("GetPatients repository (error in SELECT)", err)
+		return nil, 0, utils.InternalServerError("error getting patients")
+	}
+	defer rows.Close()
+	
+	var patients []dtos.PatientOutput
+
+	for rows.Next() {
+		var (
+			fullName string
+			email string
+			phone string
+			birthDate time.Time
+		)
+
+		err = rows.Scan(&fullName, &email, &phone, &birthDate)
+		if err != nil {
+			utils.LogError("getPatients repository (scan error)", err)
+			return nil, 0, utils.InternalServerError("error fetching patients")
+		}
+
+		patients = append(patients, dtos.PatientOutput{
+			FullName: fullName,
+			Email: email,
+			Phone: phone,
+			BirthDate: birthDate.Format("2006-01-02"),
+		})
+	}
+	
+	return patients, total, nil
+}

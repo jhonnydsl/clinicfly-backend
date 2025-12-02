@@ -1,6 +1,10 @@
 package controllers
 
 import (
+	"math"
+	"net/http"
+	"strconv"
+
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/jhonnydsl/clinify-backend/src/dtos"
@@ -69,5 +73,29 @@ func (controller *AdminController) CreateAppointment(c *gin.Context) {
 	c.JSON(201, gin.H{
 		"message": "appointment created",
 		"id": 		id,
+	})
+}
+
+func (controller *AdminController) GetPatients(c *gin.Context) {
+	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
+	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "10"))
+
+	ctx, cancel := utils.NewDBContext()
+	defer cancel()
+
+	patients, total, err := controller.Service.GetPatients(ctx, page, limit)
+	if err != nil {
+		c.JSON(utils.GetStatusCode(err), gin.H{"error": err.Error()})
+		return
+	}
+
+	totalPages := int(math.Ceil(float64(total) / float64(limit)))
+
+	c.JSON(http.StatusOK, gin.H{
+		"data": patients,
+		"page": page,
+		"limit": limit,
+		"total": total,
+		"total_pages": totalPages,
 	})
 }

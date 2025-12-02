@@ -62,9 +62,9 @@ func (service *AdminService) CreateAppointment(ctx context.Context, input dtos.A
 		return uuid.UUID{}, utils.BadRequestError("invalid format end_time")
 	}
 
-	/*if start.Before(end) {
+	if !start.Before(end) {
 		return uuid.UUID{}, utils.BadRequestError("start_time must be before end_time")
-	}*/
+	}
 
 	id, err := service.Repo.CreateAppointment(ctx, input, parsedDate, start, end, clientID)
 	if err != nil {
@@ -73,4 +73,15 @@ func (service *AdminService) CreateAppointment(ctx context.Context, input dtos.A
 	}
 
 	return id, nil
+}
+
+func (service *AdminService) GetPatients(ctx context.Context, page, limit int) ([]dtos.PatientOutput, int, error) {
+	if page < 1 {
+		page = 1
+	}
+	if limit < 1 {
+		limit = 10
+	}
+
+	return service.Repo.GetPatients(ctx, page, limit)
 }
