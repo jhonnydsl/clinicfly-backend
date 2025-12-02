@@ -12,4 +12,9 @@ type PatientsCache struct {
 	Total int
 }
 
+type AppointmentsCache struct {
+	Data []dtos.AppointmentOutput
+	Total int
+}
+
 var Cache = cache.New(30*time.Second, 1*time.Minute)

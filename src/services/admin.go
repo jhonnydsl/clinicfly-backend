@@ -77,6 +77,34 @@ func (service *AdminService) CreateAppointment(ctx context.Context, input dtos.A
 	return id, nil
 }
 
+func (service *AdminService) GetAppointments(ctx context.Context, adminID uuid.UUID, page, limit int) ([]dtos.AppointmentOutput, int, error) {
+	if page < 1 {
+		page = 1
+	}
+	if limit < 1 {
+		limit = 10
+	}
+
+	cacheKey := fmt.Sprintf("appointments_page_%d_limit_%d", page, limit)
+
+	if cached, found := utils.Cache.Get(cacheKey); found {
+		cachedRes := cached.(*utils.AppointmentsCache)
+		return cachedRes.Data, cachedRes.Total, nil
+	}
+
+	appointments, total, err := service.Repo.GetAllAppointments(ctx, adminID, page, limit)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	utils.Cache.Set(cacheKey, &utils.AppointmentsCache {
+		Data: appointments,
+		Total: total,
+	}, cache.DefaultExpiration)
+
+	return appointments, total, nil
+}
+
 func (service *AdminService) GetPatients(ctx context.Context, adminID uuid.UUID, page, limit int) ([]dtos.PatientOutput, int, error) {
 	if page < 1 {
 		page = 1

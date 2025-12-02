@@ -78,6 +78,64 @@ func (r *AdminRepository) CreateAppointment(ctx context.Context, input dtos.Appo
 	return id, nil
 }
 
+func (r *AdminRepository) GetAllAppointments(ctx context.Context, adminID uuid.UUID, page, limit int) ([]dtos.AppointmentOutput, int, error) {
+	query := `SELECT a.id, a.patient_id, p.full_name, a.date, a.start_time, a.end_time, a.status
+	FROM appointments a
+	JOIN patients p ON p.id = a.patient_id
+	WHERE a.client_id = $1
+	ORDER BY p.full_name LIMIT $2 OFFSET $3;`
+
+	queryCount := `SELECT COUNT(*) FROM appointments WHERE client_id = $1`
+
+	offset := (page - 1) * limit
+
+	var total int
+
+	err := DB.QueryRowContext(ctx, queryCount, adminID).Scan(&total)
+	if err != nil {
+		return nil, 0, utils.InternalServerError("error getting total appointments")
+	}
+
+	rows, err := DB.QueryContext(ctx, query, adminID, limit, offset)
+	if err != nil {
+		utils.LogError("getAppointments repository (error in SELECT)", err)
+		return nil, 0, utils.InternalServerError("error getting appointments")
+	}
+	defer rows.Close()
+
+	var appointments []dtos.AppointmentOutput
+
+	for rows.Next() {
+		var (
+			id uuid.UUID
+			patientID uuid.UUID
+			fullName string
+			date time.Time
+			startTime time.Time
+			endTime time.Time
+			status string
+		)
+
+		err := rows.Scan(&id, &patientID, &fullName, &date, &startTime, &endTime, &status)
+		if err != nil {
+			utils.LogError("getAppointments repository (scan error)", err)
+			return nil, 0, utils.InternalServerError("error fetching appointments")
+		}
+
+		appointments = append(appointments, dtos.AppointmentOutput{
+			ID: id,
+			PatientID: patientID,
+			FullName: fullName,
+			Date: date.Format("2006-01-02"),
+			StartTime: startTime.Format("15:04"),
+			EndTime: endTime.Format("15:04"),
+			Status: status,
+		})
+	}
+
+	return appointments, total, nil
+}
+
 func (r *AdminRepository) GetPatients(ctx context.Context, adminID uuid.UUID, page, limit int) ([]dtos.PatientOutput, int, error) {
 	query := `SELECT id, full_name, email, phone, birth_date FROM patients
 	WHERE client_id = $1
