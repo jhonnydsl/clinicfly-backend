@@ -77,7 +77,7 @@ func (service *AdminService) CreateAppointment(ctx context.Context, input dtos.A
 	return id, nil
 }
 
-func (service *AdminService) GetPatients(ctx context.Context, page, limit int) ([]dtos.PatientOutput, int, error) {
+func (service *AdminService) GetPatients(ctx context.Context, adminID uuid.UUID, page, limit int) ([]dtos.PatientOutput, int, error) {
 	if page < 1 {
 		page = 1
 	}
@@ -92,7 +92,7 @@ func (service *AdminService) GetPatients(ctx context.Context, page, limit int) (
 		return cachedRes.Data, cachedRes.Total, nil
 	}
 
-	patients, total, err := service.Repo.GetPatients(ctx, page, limit)
+	patients, total, err := service.Repo.GetPatients(ctx, adminID, page, limit)
 	if err != nil {
 		return nil, 0, err
 	}

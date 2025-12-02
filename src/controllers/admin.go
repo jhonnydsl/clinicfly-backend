@@ -80,10 +80,22 @@ func (controller *AdminController) GetPatients(c *gin.Context) {
 	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
 	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "10"))
 
+	adminIDStr, exists := c.Get("id")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid client id"})
+		return
+	}
+
+	adminID, err := uuid.Parse(adminIDStr.(string))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid client id"})
+		return
+	}
+
 	ctx, cancel := utils.NewDBContext()
 	defer cancel()
 
-	patients, total, err := controller.Service.GetPatients(ctx, page, limit)
+	patients, total, err := controller.Service.GetPatients(ctx, adminID, page, limit)
 	if err != nil {
 		c.JSON(utils.GetStatusCode(err), gin.H{"error": err.Error()})
 		return
