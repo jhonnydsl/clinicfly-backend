@@ -25,5 +25,6 @@ func SetupAdminRoutes(app *gin.RouterGroup) {
 	{
 		protectedAdmin.POST("/appointments", adminController.CreateAppointment)
 		protectedAdmin.GET("/patients", adminController.GetPatients)		// => rota correta com paginação GET /api/v1/admin/patients?page=1&limit=10
+		protectedAdmin.DELETE("patients/:id", adminController.DeletePatient)
 	}
 }

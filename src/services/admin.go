@@ -104,3 +104,11 @@ func (service *AdminService) GetPatients(ctx context.Context, page, limit int) (
 
 	return patients, total, nil
 }
+
+func (service *AdminService) DeletePatient(ctx context.Context, patientID uuid.UUID) error {
+	if patientID == uuid.Nil {
+		return utils.BadRequestError("invalid patient id")
+	}
+
+	return service.Repo.DeletePatient(ctx, patientID)
+}

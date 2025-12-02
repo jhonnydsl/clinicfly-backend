@@ -79,7 +79,7 @@ func (r *AdminRepository) CreateAppointment(ctx context.Context, input dtos.Appo
 }
 
 func (r *AdminRepository) GetPatients(ctx context.Context, page int, limit int) ([]dtos.PatientOutput, int, error) {
-	query := `SELECT full_name, email, phone, birth_date FROM patients
+	query := `SELECT id, full_name, email, phone, birth_date FROM patients
 	ORDER BY full_name LIMIT $1 OFFSET $2`
 
 	offset := (page - 1) * limit
@@ -102,19 +102,21 @@ func (r *AdminRepository) GetPatients(ctx context.Context, page int, limit int) 
 
 	for rows.Next() {
 		var (
+			id uuid.UUID
 			fullName string
 			email string
 			phone string
 			birthDate time.Time
 		)
 
-		err = rows.Scan(&fullName, &email, &phone, &birthDate)
+		err = rows.Scan(&id, &fullName, &email, &phone, &birthDate)
 		if err != nil {
 			utils.LogError("getPatients repository (scan error)", err)
 			return nil, 0, utils.InternalServerError("error fetching patients")
 		}
 
 		patients = append(patients, dtos.PatientOutput{
+			ID: id,
 			FullName: fullName,
 			Email: email,
 			Phone: phone,
@@ -123,4 +125,26 @@ func (r *AdminRepository) GetPatients(ctx context.Context, page int, limit int) 
 	}
 	
 	return patients, total, nil
+}
+
+func (r *AdminRepository) DeletePatient(ctx context.Context, patientID uuid.UUID) error {
+	query := `DELETE FROM patients WHERE id = $1`
+
+	res, err := DB.ExecContext(ctx, query, patientID)
+	if err != nil {
+		utils.LogError("deletePatient repository (error deleting patient)", err)
+		return utils.InternalServerError("error deleting patient")
+	}
+
+	rows, err := res.RowsAffected()
+	if err != nil {
+		utils.LogError("deletePatient repository (error reading rows affected)", err)
+		return utils.InternalServerError("error deleting patient")
+	}
+
+	if rows == 0 {
+		return utils.NotFoundError("patient not found")
+	}
+
+	return nil
 }

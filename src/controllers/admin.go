@@ -99,3 +99,24 @@ func (controller *AdminController) GetPatients(c *gin.Context) {
 		"total_pages": totalPages,
 	})
 }
+
+func (controller *AdminController) DeletePatient(c *gin.Context) {
+	ctx, cancel := utils.NewDBContext()
+	defer cancel()
+
+	idParam := c.Param("id")
+
+	patientID, err := uuid.Parse(idParam)
+	if err != nil {
+		c.JSON(400, gin.H{"error": "invalid patient id"})
+		return
+	}
+
+	err = controller.Service.DeletePatient(ctx, patientID)
+	if err != nil {
+		c.JSON(utils.GetStatusCode(err), gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "patient deleted successfully"})
+}

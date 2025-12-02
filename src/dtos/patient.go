@@ -19,8 +19,9 @@ type LoginPatient struct {
 }
 
 type PatientOutput struct {
-	FullName 	string `json:"full_name"`
-	Email 		string `json:"email"`
-	Phone 		string `json:"phone"`
-	BirthDate 	string `json:"birth_date"`
+	ID 			uuid.UUID `json:"id"`
+	FullName 	string 	  `json:"full_name"`
+	Email 		string    `json:"email"`
+	Phone 		string    `json:"phone"`
+	BirthDate 	string    `json:"birth_date"`
 }
