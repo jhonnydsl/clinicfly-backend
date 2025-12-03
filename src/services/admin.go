@@ -7,6 +7,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/jhonnydsl/clinify-backend/src/dtos"
+	"github.com/jhonnydsl/clinify-backend/src/mailer"
 	"github.com/jhonnydsl/clinify-backend/src/repository"
 	"github.com/jhonnydsl/clinify-backend/src/utils"
 	"github.com/patrickmn/go-cache"
@@ -14,6 +15,7 @@ import (
 
 type AdminService struct {
 	Repo *repository.AdminRepository
+	Mailer *mailer.Mailer
 }
 
 func (services *AdminService) CreateAdmin(ctx context.Context, admin dtos.AdminInput) (uuid.UUID, error) {
@@ -73,6 +75,25 @@ func (service *AdminService) CreateAppointment(ctx context.Context, input dtos.A
 		utils.LogError("createAppointment service (error call to createAppointment repository)", err)
 		return uuid.UUID{}, utils.InternalServerError("error creating appointment")
 	}
+
+	patientUUID, err := uuid.Parse(input.PatientID)
+	if err != nil {
+		return uuid.UUID{}, utils.BadRequestError("invalid patient id format")
+	}
+
+	email, err := service.Repo.GetPatientsByEmail(ctx, patientUUID)
+	if err != nil {
+		utils.LogError("createAppointment service (error call to getPatientsByEmail repository)", err)
+		return uuid.UUID{}, utils.InternalServerError("error getting email")
+	}
+
+	body := utils.BuildAppointmentEmailBody(input.Date, input.StartTime, input.EndTime)
+
+	go func() {
+		if err := service.Mailer.Send(email, "Confirmação de Agendamento", body); err != nil {
+			utils.LogError("error sending email", err)
+		}
+	}()
 
 	return id, nil
 }

@@ -209,3 +209,17 @@ func (r *AdminRepository) DeletePatient(ctx context.Context, patientID uuid.UUID
 
 	return nil
 }
+
+func (r *AdminRepository) GetPatientsByEmail(ctx context.Context, patientID uuid.UUID) (string, error) {
+	query := `SELECT email FROM patients WHERE id = $1`
+
+	var email string
+
+	err := DB.QueryRowContext(ctx, query, patientID).Scan(&email)
+	if err != nil {
+		utils.LogError("getPatientsByEmail repository (error SELECT)", err)
+		return "", utils.InternalServerError("error getting email")
+	}
+
+	return email, nil
+}

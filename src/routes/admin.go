@@ -3,13 +3,14 @@ package routes
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/jhonnydsl/clinify-backend/src/controllers"
+	"github.com/jhonnydsl/clinify-backend/src/mailer"
 	"github.com/jhonnydsl/clinify-backend/src/repository"
 	"github.com/jhonnydsl/clinify-backend/src/services"
 	"github.com/jhonnydsl/clinify-backend/src/utils/middlewares"
 )
 
-func SetupAdminRoutes(app *gin.RouterGroup) {
-	adminService := &services.AdminService{Repo: &repository.AdminRepository{}}
+func SetupAdminRoutes(app *gin.RouterGroup, mailer *mailer.Mailer) {
+	adminService := &services.AdminService{Repo: &repository.AdminRepository{}, Mailer: mailer}
 	adminController := &controllers.AdminController{Service: adminService}
 
 	app.GET("/", func(c *gin.Context) {
