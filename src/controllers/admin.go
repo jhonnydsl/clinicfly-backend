@@ -206,3 +206,28 @@ func (controller *AdminController) CreateCalendarSlot(c *gin.Context) {
 		"id": 		id,
 	})
 }
+
+func (controller *AdminController) GetCalendarSlots(c *gin.Context) {
+	adminIDStr, exists := c.Get("id")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid client id"})
+		return
+	}
+
+	adminID, err := uuid.Parse(adminIDStr.(string))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid client id"})
+		return
+	}
+
+	ctx, cancel := utils.NewDBContext()
+	defer cancel()
+
+	slotsOutputs, err := controller.Service.GetCalendarSlots(ctx, adminID)
+	if err != nil {
+		c.JSON(utils.GetStatusCode(err), gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, slotsOutputs)
+}

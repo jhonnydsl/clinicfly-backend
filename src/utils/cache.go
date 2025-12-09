@@ -17,4 +17,8 @@ type AppointmentsCache struct {
 	Total int
 }
 
+type SlotsCache struct {
+	Data []dtos.CalendarSlotsOutput
+}
+
 var Cache = cache.New(30*time.Second, 1*time.Minute)

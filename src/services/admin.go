@@ -188,3 +188,23 @@ func (service *AdminService) CreateCalendarSlot(ctx context.Context, input dtos.
 
 	return id, nil
 }
+
+func (service *AdminService) GetCalendarSlots(ctx context.Context, adminID uuid.UUID) ([]dtos.CalendarSlotsOutput, error) {
+	cacheKey := fmt.Sprintf("calendar_slots_%s", adminID)
+
+	if cached, found := utils.Cache.Get(cacheKey); found {
+		return cached.(*utils.SlotsCache).Data, nil
+	}
+
+	slotsOutputs, err := service.Repo.GetCalendarSlots(ctx, adminID)
+	if err != nil {
+		utils.LogError("getCalendarSlots service (error call to repo)", err)
+		return nil, utils.InternalServerError("error getting slots")
+	}
+
+	utils.Cache.Set(cacheKey, &utils.SlotsCache{
+		Data: slotsOutputs,
+	}, cache.DefaultExpiration)
+
+	return slotsOutputs, nil
+}

@@ -239,3 +239,40 @@ func (r *AdminRepository) CreateCalendarSlot(ctx context.Context, input dtos.Cal
 
 	return id, nil
 }
+
+func (r *AdminRepository) GetCalendarSlots(ctx context.Context, adminID uuid.UUID) ([]dtos.CalendarSlotsOutput, error) {
+	query := `SELECT id, weekday, start_time, end_time FROM calendar_slots WHERE client_id = $1`
+
+	var slotsOutput []dtos.CalendarSlotsOutput
+
+	rows, err := DB.QueryContext(ctx, query, adminID)
+	if err != nil {
+		utils.LogError("getCalendarSlots repository (SELECT error)", err)
+		return nil, utils.InternalServerError("error getting slots")
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var (
+			id uuid.UUID
+			weekday string
+			startTime time.Time
+			endTime time.Time
+		)
+
+		err := rows.Scan(&id, &weekday, &startTime, &endTime)
+		if err != nil {
+			utils.LogError("GetCalendarSlots repository (scan error)", err)
+			return nil, utils.InternalServerError("error fetching slots")
+		}
+
+		slotsOutput = append(slotsOutput, dtos.CalendarSlotsOutput{
+			ID: id,
+			Weekday: weekday,
+			StartTime: startTime.Format("15:04"),
+			EndTime: endTime.Format("15:04"),
+		})
+	}
+
+	return slotsOutput, nil
+}
