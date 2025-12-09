@@ -30,5 +30,6 @@ func SetupAdminRoutes(app *gin.RouterGroup, mailer *mailer.Mailer) {
 		protectedAdmin.DELETE("patients/:id", adminController.DeletePatient)
 		protectedAdmin.POST("/calendar-slots", adminController.CreateCalendarSlot)
 		protectedAdmin.GET("/calendar-slots", adminController.GetCalendarSlots)
+		protectedAdmin.DELETE("/calendar-slots/:id", adminController.DeleteCalendarSlot)
 	}
 }

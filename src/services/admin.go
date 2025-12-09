@@ -208,3 +208,11 @@ func (service *AdminService) GetCalendarSlots(ctx context.Context, adminID uuid.
 
 	return slotsOutputs, nil
 }
+
+func (service *AdminService) DeleteCalendarSlot(ctx context.Context, slotID uuid.UUID) error {
+	if slotID == uuid.Nil {
+		return utils.BadRequestError("invalid slot id")
+	}
+
+	return service.Repo.DeleteCalendarSlot(ctx, slotID)
+}

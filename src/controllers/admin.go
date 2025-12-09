@@ -156,7 +156,7 @@ func (controller *AdminController) DeletePatient(c *gin.Context) {
 
 	patientID, err := uuid.Parse(idParam)
 	if err != nil {
-		c.JSON(400, gin.H{"error": "invalid patient id"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid patient id"})
 		return
 	}
 
@@ -230,4 +230,25 @@ func (controller *AdminController) GetCalendarSlots(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, slotsOutputs)
+}
+
+func (controller *AdminController) DeleteCalendarSlot(c *gin.Context) {
+	ctx, cancel := utils.NewDBContext()
+	defer cancel()
+
+	idParam := c.Param("id")
+
+	slotID, err := uuid.Parse(idParam)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid slot id"})
+		return
+	}
+
+	err = controller.Service.DeleteCalendarSlot(ctx, slotID)
+	if err != nil {
+		c.JSON(utils.GetStatusCode(err), gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "slot deleted successfully"})
 }

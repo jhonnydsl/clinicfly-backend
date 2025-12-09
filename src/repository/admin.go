@@ -276,3 +276,25 @@ func (r *AdminRepository) GetCalendarSlots(ctx context.Context, adminID uuid.UUI
 
 	return slotsOutput, nil
 }
+
+func (r *AdminRepository) DeleteCalendarSlot(ctx context.Context, slotID uuid.UUID) error {
+	query := `DELETE FROM calendar_slots WHERE id = $1`
+
+	res, err := DB.ExecContext(ctx, query, slotID)
+	if err != nil {
+		utils.LogError("deleteCalendarSlot repository (error deleting slot)", err)
+		return utils.InternalServerError("error deleting slot")
+	}
+
+	rows, err := res.RowsAffected()
+	if err != nil {
+		utils.LogError("deleteCalendarSlot repository (error reading rows affected)", err)
+		return utils.InternalServerError("error deleting slot")
+	}
+
+	if rows == 0 {
+		return utils.NotFoundError("slot not found")
+	}
+
+	return nil
+}
