@@ -1,6 +1,10 @@
 package dtos
 
-import "github.com/google/uuid"
+import (
+	"time"
+
+	"github.com/google/uuid"
+)
 
 type CalendarSlotsInput struct {
 	Weekday   int    `json:"weekday" binding:"required"`
@@ -13,4 +17,12 @@ type CalendarSlotsOutput struct {
 	Weekday 	string 	  `json:"weekday"`
 	StartTime 	string 	  `json:"start_time"`
 	EndTime 	string 	  `json:"end_time"`
+}
+
+type CalendarSlotDB struct {
+	ID 			uuid.UUID
+	AdminID 	uuid.UUID
+	Weekday 	int
+	StartTime 	time.Time
+	EndTime 	time.Time
 }

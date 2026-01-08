@@ -136,6 +136,66 @@ func (r *AdminRepository) GetAllAppointments(ctx context.Context, adminID uuid.U
 	return appointments, total, nil
 }
 
+func (r *AdminRepository) GetAppointmentsByDate(ctx context.Context, adminID uuid.UUID, date string) ([]dtos.AppointmentOutput, error) {
+	query := `SELECT a.id, a.patient_id, p.full_name, a.date, a.start_time, a.end_time, a.status
+	FROM appointments a
+	JOIN patients p ON p.id = a.patient_id
+	WHERE a.client_id = $1 AND a.date = $2 AND a.status != 'cancelled'
+	ORDER BY a.start_time`
+
+	rows, err := DB.QueryContext(ctx, query, adminID, date)
+	if err != nil {
+		utils.LogError("getAppointmentsByDate repository (select error)", err)
+		return nil, utils.InternalServerError("error getting appointments by date")
+	}
+	defer rows.Close()
+
+	appointments := make([]dtos.AppointmentOutput, 0)
+
+	for rows.Next() {
+		var (
+			id uuid.UUID
+			patientID uuid.UUID
+			fullName string
+			dateDB time.Time
+			startTime time.Time
+			endTime time.Time
+			status string
+		)
+
+		err := rows.Scan(
+			&id,
+			&patientID,
+			&fullName,
+			&dateDB,
+			&startTime,
+			&endTime,
+			&status,
+		)
+		if err != nil {
+			utils.LogError("getAppointmentsByDate repository (scan error)", err)
+			return nil, utils.InternalServerError("error scanning appointments")
+		}
+
+		appointments = append(appointments, dtos.AppointmentOutput{
+			ID: id,
+			PatientID: patientID,
+			FullName: fullName,
+			Date: dateDB.Format("2006-01-02"),
+			StartTime: startTime.Format("15:04"),
+			EndTime: endTime.Format("15:04"),
+			Status: status,
+		})
+	}
+
+	if err := rows.Err(); err != nil {
+		utils.LogError("getAppointmentsByDate repository (rows error)", err)
+		return nil, utils.InternalServerError("error iterating appointments")
+	}
+
+	return appointments, nil
+}
+
 func (r *AdminRepository) GetPatients(ctx context.Context, adminID uuid.UUID, page, limit int) ([]dtos.PatientOutput, int, error) {
 	query := `SELECT id, full_name, email, phone, birth_date FROM patients
 	WHERE client_id = $1
@@ -297,4 +357,42 @@ func (r *AdminRepository) DeleteCalendarSlot(ctx context.Context, slotID uuid.UU
 	}
 
 	return nil
+}
+
+func (r *AdminRepository) GetCalendarSlotsByWeekday(ctx context.Context, adminID uuid.UUID, weekday int) ([]dtos.CalendarSlotDB, error) {
+	query := `SELECT id, client_id, weekday, start_time, end_time FROM calendar_slots
+	WHERE client_id = $1 AND weekday = $2 ORDER BY start_time`
+
+	rows, err := DB.QueryContext(ctx, query, adminID, weekday)
+	if err != nil {
+		utils.LogError("getCalendarSlotsByWeekday repository (error getting slots)", err)
+		return nil, utils.InternalServerError("error getting slots")
+	}
+	defer rows.Close()
+
+	slots := make([]dtos.CalendarSlotDB, 0)
+
+	for rows.Next() {
+		var slot dtos.CalendarSlotDB
+
+		err := rows.Scan(
+			&slot.ID,
+			&slot.AdminID,
+			&slot.Weekday,
+			&slot.StartTime,
+			&slot.EndTime,
+		)
+		if err != nil {
+			utils.LogError("getCalendarSlotsByWeekday repository (scan error)", err)
+			return nil, utils.InternalServerError("error fetching slots")
+		}
+
+		slots = append(slots, slot)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, utils.InternalServerError("error getting slots")
+	}
+
+	return slots, nil
 }
