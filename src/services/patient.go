@@ -49,3 +49,55 @@ func (service *PatientService) CreatePatient(ctx context.Context, patient dtos.P
 
 	return id, nil
 }
+
+func (service *PatientService) GetDoctorAvaliableSlots(ctx context.Context, adminID uuid.UUID, date string) ([]string, error){
+	parsedDate, err := utils.ParseDate(date)
+	if err != nil {
+		utils.LogError("getAvailableSlots service (error parsed date)", err)
+		return nil, utils.BadRequestError("invalid date format")
+	}
+
+	weekday := int(parsedDate.Weekday())
+
+	slots, err := service.AdminRepo.GetCalendarSlotsByWeekday(ctx, adminID, weekday)
+	if err != nil {
+		utils.LogError("getDoctorAvailableSlots service (error getting calendar slots)", err)
+		return nil, utils.InternalServerError("error getting calendar slots")
+	}
+
+	var possibleSlots []time.Time
+	interval := 60 * time.Minute
+
+	for _, slot := range slots {
+		current := slot.StartTime
+
+		for current.Add(interval).Equal(slot.EndTime) || current.Add(interval).Before(slot.EndTime) {
+			possibleSlots = append(possibleSlots, current)
+			current = current.Add(interval)
+		}
+	}
+
+	appointments, err := service.AdminRepo.GetAppointmentsByDate(ctx, adminID, parsedDate.Format("2006-01-02"))
+	if err != nil {
+		utils.LogError("getDoctorAvailableSlots service (error getting appointments)", err)
+		return nil, utils.InternalServerError("error getting appointments")
+	}
+
+	occupied := make(map[string]bool)
+
+	for _, appt := range appointments {
+		occupied[appt.StartTime] = true
+	}
+
+	available := []string{}
+
+	for _, slot := range possibleSlots {
+		formatted := slot.Format("15:04")
+
+		if !occupied[formatted] {
+			available = append(available, formatted)
+		}
+	}
+
+	return available, nil
+}

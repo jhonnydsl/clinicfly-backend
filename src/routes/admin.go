@@ -20,6 +20,7 @@ func SetupAdminRoutes(app *gin.RouterGroup, mailer *mailer.Mailer) {
 	admin := app.Group("/admin")
 	{
 		admin.POST("", adminController.CreateAdmin)
+		admin.GET("/:id/available-slots", adminController.GetAvaliableSlots)
 	}
 
 	protectedAdmin := app.Group("/admin", middlewares.AuthMiddleware(), middlewares.AdminOnlyMiddleware())

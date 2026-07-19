@@ -17,5 +17,6 @@ func SetupPatientRoutes(app *gin.RouterGroup) {
 	patient := app.Group("/patient")
 	{
 		patient.POST("", patientController.CreatePatient)
+		patient.GET("doctors/:id/available-slots", patientController.GetDoctorAvailableSlots)
 	}
 }

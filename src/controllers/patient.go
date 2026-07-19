@@ -1,7 +1,10 @@
 package controllers
 
 import (
+	"net/http"
+
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 	"github.com/jhonnydsl/clinify-backend/src/dtos"
 	"github.com/jhonnydsl/clinify-backend/src/services"
 	"github.com/jhonnydsl/clinify-backend/src/utils"
@@ -33,4 +36,31 @@ func (controller *PatientController) CreatePatient(c *gin.Context) {
 		"message": "user patient created",
 		"id": 		id,
 	})
+}
+
+func (controller *PatientController) GetDoctorAvailableSlots(c *gin.Context) {
+	adminIDStr := c.Param("id")
+
+	adminID, err := uuid.Parse(adminIDStr)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid doctor id"})
+		return
+	}
+
+	date := c.Query("date")
+	if date == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "date is required"})
+		return
+	}
+
+	ctx, cancel := utils.NewDBContext()
+	defer cancel()
+
+	availableSlots, err := controller.Service.GetDoctorAvaliableSlots(ctx, adminID, date)
+	if err != nil {
+		c.JSON(utils.GetStatusCode(err), gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, availableSlots)
 }

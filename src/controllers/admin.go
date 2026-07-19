@@ -252,3 +252,32 @@ func (controller *AdminController) DeleteCalendarSlot(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{"message": "slot deleted successfully"})
 }
+
+// Retornando para dar continuidade ao projeto
+
+func (controller *AdminController) GetAvaliableSlots(c *gin.Context) {
+	adminIDStr := c.Param("id")
+
+	ctx, cancel := utils.NewDBContext()
+	defer cancel()
+
+	adminID, err := uuid.Parse(adminIDStr)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid client ID"})
+		return
+	}
+
+	date := c.Query("date")
+	if date == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "date is required"})
+		return
+	}
+
+	availableSlots, err := controller.Service.GetAvaliableSlots(ctx, adminID, date)
+	if err != nil {
+		c.JSON(utils.GetStatusCode(err), gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, availableSlots)
+}
