@@ -180,9 +180,22 @@ func (service *AdminService) CreateCalendarSlot(ctx context.Context, input dtos.
 		return uuid.UUID{}, utils.BadRequestError("end time must be after start time")
 	}
 
+	// Metodo para evitar sobreposição de slots
+	slots, err := service.Repo.GetCalendarSlotsByWeekday(ctx, adminID, input.Weekday)
+	if err != nil {
+		utils.LogError("createCalendarSlot service (error getting calendar slots)", nil)
+		return uuid.UUID{}, utils.InternalServerError("error getting calendar slots")
+	}
+
+	for _, slot := range slots {
+		if start.Before(slot.EndTime) && end.After(slot.StartTime) {
+			return uuid.UUID{}, utils.BadRequestError("calendar slot overlaps with an existing slot")
+		}
+	}
+
 	id, err := service.Repo.CreateCalendarSlot(ctx, input, start, end, adminID)
 	if err != nil {
-		utils.LogError("createCalendarSlot service (error call to repository)", nil)
+		utils.LogError("createCalendarSlot service (error call to repository)", err)
 		return uuid.UUID{}, utils.InternalServerError("error creating calendar slot")
 	}
 
