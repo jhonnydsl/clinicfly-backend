@@ -70,6 +70,30 @@ func (service *AdminService) CreateAppointment(ctx context.Context, input dtos.A
 		return uuid.UUID{}, utils.BadRequestError("start_time must be before end_time")
 	}
 
+	appointments, err := service.Repo.GetAppointmentsByDate(ctx, clientID, input.Date)
+	if err != nil {
+		utils.LogError("createAppointment service (error getting appointments)", err)
+		return uuid.UUID{}, utils.InternalServerError("error getting appointments")
+	}
+
+	for _, appointment := range appointments {
+		appointmentStart, err := utils.ParseTime(appointment.StartTime)
+		if err != nil {
+			utils.LogError("createAppointment service (error parsing appointment start_time)", err)
+			return uuid.UUID{}, utils.InternalServerError("error validating appointments")
+		}
+
+		appointmentEnd, err := utils.ParseTime(appointment.EndTime)
+		if err != nil {
+			utils.LogError("createAppointment service (error parsing appointment end_time)", err)
+			return uuid.UUID{}, utils.InternalServerError("error validating appointments")
+		}
+
+		if start.Before(appointmentEnd) && end.After(appointmentStart) {
+			return uuid.UUID{}, utils.BadRequestError("this time slot is already booked")
+		}
+	}
+
 	id, err := service.Repo.CreateAppointment(ctx, input, parsedDate, start, end, clientID)
 	if err != nil {
 		utils.LogError("createAppointment service (error call to createAppointment repository)", err)
