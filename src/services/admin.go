@@ -70,6 +70,27 @@ func (service *AdminService) CreateAppointment(ctx context.Context, input dtos.A
 		return uuid.UUID{}, utils.BadRequestError("start_time must be before end_time")
 	}
 
+	weekday := int(parsedDate.Weekday())
+
+	slots, err := service.Repo.GetCalendarSlotsByWeekday(ctx, clientID, weekday)
+	if err != nil {
+		utils.LogError("createAppointment service (error getting calendar slots)", err)
+		return uuid.UUID{}, utils.InternalServerError("error getting calendar slots")
+	}
+
+	validSlot := false
+
+	for _, slot := range slots {
+		if !start.Before(slot.StartTime) && !end.After(slot.EndTime) {
+			validSlot = true
+			break
+		}
+	}
+
+	if !validSlot {
+		return uuid.UUID{}, utils.BadRequestError("appointment is outside the doctor's availability")
+	}
+
 	appointments, err := service.Repo.GetAppointmentsByDate(ctx, clientID, input.Date)
 	if err != nil {
 		utils.LogError("createAppointment service (error getting appointments)", err)
