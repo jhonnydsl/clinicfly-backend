@@ -38,7 +38,7 @@ func main() {
 	v1 := app.Group("/api/v1")
 	{
 		routes.SetupAdminRoutes(v1, mailer)
-		routes.SetupPatientRoutes(v1)
+		routes.SetupPatientRoutes(v1, mailer)
 		routes.SetupLoginRoutes(v1)
 	}
 
