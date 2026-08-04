@@ -281,3 +281,37 @@ func (controller *AdminController) GetAvaliableSlots(c *gin.Context) {
 
 	c.JSON(http.StatusOK, availableSlots)
 }
+
+func (controller *AdminController) CancelAppointmentByAdmin(c *gin.Context) {
+	ctx, cancel := utils.NewDBContext()
+	defer cancel()
+
+	adminIDValue, exists := c.Get("id")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "client id not found in context"})
+		return
+	}
+
+	adminID, err := uuid.Parse(adminIDValue.(string))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid client id"})
+		return
+	}
+
+	appointmentIDStr := c.Param("id")
+
+	appointmentID, err := uuid.Parse(appointmentIDStr)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid appointment id"})
+		return
+	}
+	err = controller.Service.CancelAppointmentByAdmin(ctx, appointmentID, adminID)
+	if err != nil {
+		c.JSON(utils.GetStatusCode(err), gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "appointment cancelled successfully",
+	})
+}

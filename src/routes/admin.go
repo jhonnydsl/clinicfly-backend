@@ -22,15 +22,16 @@ func SetupAdminRoutes(app *gin.RouterGroup, mailer *mailer.Mailer) {
 		admin.POST("", adminController.CreateAdmin)
 		admin.GET("/:id/available-slots", adminController.GetAvaliableSlots)
 	}
-
+	
 	protectedAdmin := app.Group("/admin", middlewares.AuthMiddleware(), middlewares.AdminOnlyMiddleware())
 	{
 		protectedAdmin.POST("/appointments", adminController.CreateAppointment)
 		protectedAdmin.GET("/patients", adminController.GetPatients)			// => rota correta com paginação GET /api/v1/admin/patients?page=1&limit=10
 		protectedAdmin.GET("/appointments", adminController.GetAppointments)	// => rota correta com paginação GET /api/v1/admin/appointments?page=1&limit=10
-		protectedAdmin.DELETE("patients/:id", adminController.DeletePatient)
+		protectedAdmin.DELETE("/patients/:id", adminController.DeletePatient)
 		protectedAdmin.POST("/calendar-slots", adminController.CreateCalendarSlot)
 		protectedAdmin.GET("/calendar-slots", adminController.GetCalendarSlots)
 		protectedAdmin.DELETE("/calendar-slots/:id", adminController.DeleteCalendarSlot)
+		protectedAdmin.PATCH("/appointments/:id/cancel", adminController.CancelAppointmentByAdmin)
 	}
 }

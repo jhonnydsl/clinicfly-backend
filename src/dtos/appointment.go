@@ -18,3 +18,12 @@ type AppointmentOutput struct {
 	EndTime 	string    `json:"end_time"`
 	Status 		string    `json:"status"`
 }
+
+type AppointmentDetails struct {
+	ID uuid.UUID
+	Date string
+	StartTime string
+	EndTime string
+	PatientEmail string
+	AdminEmail string
+}

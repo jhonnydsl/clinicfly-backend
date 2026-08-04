@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"database/sql"
 	"time"
 
 	"github.com/google/uuid"
@@ -395,4 +396,78 @@ func (r *AdminRepository) GetCalendarSlotsByWeekday(ctx context.Context, adminID
 	}
 
 	return slots, nil
+}
+
+func (r *AdminRepository) CancelAppointmentByAdmin(ctx context.Context, appointmentID, adminID uuid.UUID) error {
+	query := `
+		UPDATE appointments
+		SET status = 'cancelled'
+		WHERE id = $1 AND client_id = $2 AND status = 'scheduled'
+	`
+
+	result, err := DB.ExecContext(ctx, query, appointmentID, adminID)
+	if err != nil {
+		utils.LogError("cancelAppointmentByAdmin repository (update error)", err)
+		return utils.InternalServerError("error cancelling appointment")
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		utils.LogError("cancelAppointmentByAdmin repository (rows affected error)", err)
+		return utils.InternalServerError("error cancelling appointment")
+	}
+
+	if rowsAffected == 0 {
+		return utils.NotFoundError("appointment not found")
+	}
+
+	return nil
+}
+
+func (r *AdminRepository) GetAllAppointmentByID(ctx context.Context, appointmentID, adminID uuid.UUID) (dtos.AppointmentDetails, error) {
+	query := `
+		SELECT
+			a.id,
+			a.date,
+			a.start_time,
+			a.end_time,
+			p.email,
+			c.email
+		FROM appointments a
+		JOIN patients p ON p.id = a.patient_id
+		JOIN clients c ON c.id = a.client_id
+		WHERE a.id = $1
+			AND a.client_id = $2
+			AND a.status = 'scheduled'
+	`
+
+	var (
+		appointment dtos.AppointmentDetails
+		dateDB time.Time
+		startTime time.Time
+		endTime time.Time
+	)
+
+	err := DB.QueryRowContext(ctx, query, appointmentID, adminID).Scan(
+		&appointment.ID,
+		&dateDB,
+		&startTime,
+		&endTime,
+		&appointment.PatientEmail,
+		&appointment.AdminEmail,
+	)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return dtos.AppointmentDetails{}, utils.NotFoundError("appointment not found")
+		}
+
+		utils.LogError("getAppointmentByID repository (query error)", err)
+		return dtos.AppointmentDetails{}, utils.InternalServerError("error getting appointment")
+	}
+
+	appointment.Date = dateDB.Format("2006-01-02")
+	appointment.StartTime = startTime.Format("15:04")
+	appointment.EndTime = endTime.Format("15:04")
+
+	return appointment, nil
 }

@@ -324,3 +324,43 @@ func (service *AdminService) GetAvaliableSlots(ctx context.Context, adminID uuid
 
 	return available, nil
 }
+
+func (service *AdminService) CancelAppointmentByAdmin(ctx context.Context, appointmentID, adminID uuid.UUID) error {
+	appointment, err := service.Repo.GetAllAppointmentByID(ctx, appointmentID, adminID)
+	if err != nil {
+		utils.LogError("cancelAppointmentByAdmin service (error getting appointment)", err)
+		return err
+	}
+
+	err = service.Repo.CancelAppointmentByAdmin(ctx, appointmentID, adminID)
+	if err != nil {
+		utils.LogError("cancelAppointmentByAdmin service (error cancelling appointment)", err)
+		return err
+	}
+
+	body := utils.BuildAppointmentCancellationEmailBody(
+		appointment.Date,
+		appointment.StartTime,
+		appointment.EndTime,
+	)
+
+	go func() {
+		if err := service.Mailer.Send(
+			appointment.PatientEmail,
+			"Cancelamento de Agendamento",
+			body,
+		); err != nil {
+			utils.LogError("error sending patient cancellation email", err)
+		}
+
+		if err := service.Mailer.Send(
+			appointment.AdminEmail,
+			"Cancelamento de Agendamento",
+			body,
+		); err != nil {
+			utils.LogError("error sending admin cancellation email", err)
+		}
+	}()
+
+	return nil
+}
