@@ -72,3 +72,17 @@ func AdminOnlyMiddleware() gin.HandlerFunc {
 		c.Next()
 	}
 }
+
+func PatientOnlyMiddleware() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		role := c.GetString("role")
+
+		if role != "patient" {
+			c.JSON(403, gin.H{"error": "forbidden: patient only"})
+			c.Abort()
+			return 
+		}
+
+		c.Next()
+	}
+}

@@ -6,6 +6,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/jhonnydsl/clinify-backend/src/dtos"
+	"github.com/jhonnydsl/clinify-backend/src/mailer"
 	"github.com/jhonnydsl/clinify-backend/src/repository"
 	"github.com/jhonnydsl/clinify-backend/src/utils"
 )
@@ -13,6 +14,7 @@ import (
 type PatientService struct {
 	Repo *repository.PatientRepository
 	AdminRepo *repository.AdminRepository
+	Mailer *mailer.Mailer
 }
 
 func (service *PatientService) CreatePatient(ctx context.Context, patient dtos.PatientInput) (uuid.UUID, error) {
@@ -100,4 +102,44 @@ func (service *PatientService) GetDoctorAvaliableSlots(ctx context.Context, admi
 	}
 
 	return available, nil
+}
+
+func (service *PatientService) CancelAppointmentByPatient(ctx context.Context, appointmentID, patientID uuid.UUID) error {
+	appointment, err := service.Repo.GetAppointmentByID(ctx, appointmentID, patientID)
+	if err != nil {
+		utils.LogError("cancelAppointmentByPatient service (error getting appointment)", err)
+		return err
+	}
+
+	err = service.Repo.CancelAppointmentByPatient(ctx, appointmentID, patientID)
+	if err != nil {
+		utils.LogError("cancelAppointmentByPatient service (error cancelling appointment)", err)
+		return err
+	}
+	
+	body := utils.BuildAppointmentCancellationEmailBody(
+		appointment.Date,
+		appointment.StartTime,
+		appointment.EndTime,
+	)
+
+	go func() {
+		if err := service.Mailer.Send(
+			appointment.PatientEmail,
+			"Cancelamento do Agendamento",
+			body,
+		); err != nil {
+			utils.LogError("error sending patient cancellation email", err)
+		}
+
+		if err := service.Mailer.Send(
+			appointment.AdminEmail,
+			"Cancelamento de Agendamento",
+			body,
+		); err != nil {
+			utils.LogError("error sending admin cancellation email", err)
+		}
+	}()
+
+	return nil
 }

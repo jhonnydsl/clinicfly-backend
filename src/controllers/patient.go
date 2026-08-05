@@ -96,3 +96,38 @@ func (controller *PatientController) CreateAppointment(c *gin.Context) {
 		"id": id,
 	})
 }
+
+func (controller *PatientController) CancelAppointmentByPatient(c *gin.Context) {
+	ctx, cancel := utils.NewDBContext()
+	defer cancel()
+
+	patientIDValue, exists := c.Get("id")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "patient id not found in context"})
+		return
+	}
+
+	patientID, err := uuid.Parse(patientIDValue.(string))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid patient id"})
+		return
+	}
+
+	appointmentIDStr := c.Param("id")
+
+	appointmentID, err := uuid.Parse(appointmentIDStr)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid appointment id"})
+		return
+	}
+
+	err = controller.Service.CancelAppointmentByPatient(ctx, appointmentID, patientID)
+	if err != nil {
+		c.JSON(utils.GetStatusCode(err), gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "appointment cancelled successfully",
+	})
+}
