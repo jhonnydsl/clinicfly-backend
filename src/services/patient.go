@@ -52,6 +52,24 @@ func (service *PatientService) CreatePatient(ctx context.Context, patient dtos.P
 	return id, nil
 }
 
+func (service *PatientService) GetAppointments(ctx context.Context, patientID uuid.UUID, page, limit int) ([]dtos.PatientAppointmentOutput, error) {
+	if page < 1 {
+		page = 1
+	}
+
+	if limit < 1 {
+		limit = 10
+	}
+
+	appointments, err := service.Repo.GetAppointments(ctx, patientID, page, limit)
+	if err != nil {
+		utils.LogError("getPatientAppointments service (error calling repository)", err)
+		return nil, utils.InternalServerError("error getting appointments")
+	}
+
+	return appointments, nil
+}
+
 func (service *PatientService) GetDoctorAvaliableSlots(ctx context.Context, adminID uuid.UUID, date string) ([]string, error){
 	parsedDate, err := utils.ParseDate(date)
 	if err != nil {

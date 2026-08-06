@@ -37,6 +37,71 @@ func (r *PatientRepository) CreatePatient(ctx context.Context, patient dtos.Pati
 	return id, nil
 }
 
+func (r *PatientRepository) GetAppointments(ctx context.Context, patientID uuid.UUID, page, limit int) ([]dtos.PatientAppointmentOutput, error) {
+	offset := (page - 1) * limit
+
+	query := `
+		SELECT
+			a.id,
+			a.client_id,
+			c.full_name,
+			a.date,
+			a.start_time,
+			a.end_time,
+			a.status
+		FROM appointments a
+		JOIN clients c ON c.id = a.client_id
+		WHERE a.patient_id = $1
+		ORDER BY a.date DESC, a.start_time DESC
+		LIMIT $2 OFFSET $3
+	`
+
+	rows, err := DB.QueryContext(ctx, query, patientID, limit, offset)
+	if err != nil {
+		utils.LogError("getPatientAppointments repository (query error)", err)
+		return nil, utils.InternalServerError("error getting appointments")
+	}
+	defer rows.Close()
+
+	var appointments []dtos.PatientAppointmentOutput
+
+	for rows.Next() {
+		var (
+			appointment dtos.PatientAppointmentOutput
+			dateDB time.Time
+			startTime time.Time
+			endTime time.Time
+		)
+
+		err := rows.Scan(
+			&appointment.ID,
+			&appointment.AdminID,
+			&appointment.FullName,
+			&dateDB,
+			&startTime,
+			&endTime,
+			&appointment.Status,
+		)
+		if err != nil {
+			utils.LogError("getPatientAppointments repository (scan error)", err)
+			return nil, utils.InternalServerError("error scanning appointments")
+		}
+
+		appointment.Date = dateDB.Format("2006-01-02")
+		appointment.StartTime = startTime.Format("15:04")
+		appointment.EndTime = endTime.Format("15:04")
+
+		appointments = append(appointments, appointment)
+	}
+
+	if err := rows.Err(); err != nil {
+		utils.LogError("getPatientAppointments repository (rows error)", err)
+		return nil, utils.InternalServerError("error reading appointments")
+	}
+
+	return appointments, nil
+}
+
 func (r *PatientRepository) CancelAppointmentByPatient(ctx context.Context, appointmentID, patientID uuid.UUID) error {
 	query := `
 		UPDATE appointments

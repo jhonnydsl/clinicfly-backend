@@ -39,5 +39,6 @@ func SetupPatientRoutes(app *gin.RouterGroup, mailer *mailer.Mailer) {
 	{
 		protectedPatient.POST("/doctors/:id/appointments", patientController.CreateAppointment)
 		protectedPatient.PATCH("/appointments/:id/cancel", patientController.CancelAppointmentByPatient)
+		protectedPatient.GET("/appointments", patientController.GetAppointments)
 	}
 }

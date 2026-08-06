@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"net/http"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -37,6 +38,34 @@ func (controller *PatientController) CreatePatient(c *gin.Context) {
 		"message": "user patient created",
 		"id": 		id,
 	})
+}
+
+func (controller *PatientController) GetAppointments(c *gin.Context) {
+	ctx, cancel := utils.NewDBContext()
+	defer cancel()
+
+	patientIDValue, exists := c.Get("id")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "patient id not found in context"})
+		return
+	}
+
+	patientID, err := uuid.Parse(patientIDValue.(string))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid patient id"})
+		return
+	}
+
+	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
+	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "10"))
+
+	appointments, err := controller.Service.GetAppointments(ctx, patientID, page, limit)
+	if err != nil {
+		c.JSON(utils.GetStatusCode(err), gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, appointments)
 }
 
 func (controller *PatientController) GetDoctorAvailableSlots(c *gin.Context) {
