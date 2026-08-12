@@ -364,3 +364,84 @@ func (service *AdminService) CancelAppointmentByAdmin(ctx context.Context, appoi
 
 	return nil
 }
+
+func (service *AdminService) UpdateAppointment(ctx context.Context, appointmentID, adminID uuid.UUID, input dtos.AppointmentUpdateInput) error {
+	parsedDate, err := utils.ParseDate(input.Date)
+	if err != nil {
+		utils.LogError("updateAppointment service (error parsing date)", err)
+		return utils.BadRequestError("invalid date format")
+	}
+
+	startTime, err := utils.ParseTime(input.StartTime)
+	if err != nil {
+		utils.LogError("updateAppointment service (error parsing start time)", err)
+		return utils.BadRequestError("invalid start time format")
+	}
+
+	endTime, err := utils.ParseTime(input.EndTime)
+	if err != nil {
+		utils.LogError("updateAppointment service (error parsing end time)", err)
+		return utils.BadRequestError("invalid end time format")
+	}
+
+	if !startTime.Before(endTime) {
+		return utils.BadRequestError("start time must be before end time")
+	}
+
+	weekday := int(parsedDate.Weekday())
+
+	slots, err := service.Repo.GetCalendarSlotsByWeekday(ctx, adminID, weekday)
+	if err != nil {
+		utils.LogError("updateAppointment service (error getting calendar slots)", err)
+		return err
+	}
+
+	withinSchedule := false
+
+	for _, slot := range slots {
+		if !startTime.Before(slot.StartTime) && !endTime.After(slot.EndTime) {
+			withinSchedule = true
+			break
+		}
+	}
+
+	if !withinSchedule {
+		return utils.BadRequestError("appointment time is outside doctor's availability")
+	}
+
+	appointments, err := service.Repo.GetAppointmentsByDate(ctx, adminID, parsedDate.Format("2006-01-02"))
+	if err != nil {
+		utils.LogError("updateAppointment service (error getting appointments)", err)
+		return err
+	}
+
+	for _, appointment := range appointments {
+		if appointment.ID == appointmentID {
+			continue
+		}
+
+		existingStart, err := utils.ParseTime(appointment.StartTime)
+		if err != nil {
+			utils.LogError("updateAppointment service (error parsing existing start time)", err)
+			return utils.InternalServerError("error validating appointment")
+		}
+
+		existingEnd, err := utils.ParseTime(appointment.EndTime)
+		if err != nil {
+			utils.LogError("updateAppointment service (error parsing existing end time)", err)
+			return utils.InternalServerError("error validating appointment")
+		}
+
+		if startTime.Before(existingEnd) && endTime.After(existingStart) {
+			return utils.BadRequestError("appointment time is already occupied")
+		}
+	}
+
+	err = service.Repo.UpdateAppointment(ctx, appointmentID, adminID, parsedDate, startTime, endTime)
+	if err != nil {
+		utils.LogError("updateAppointment service (error updating appointment)", err)
+		return err
+	}
+
+	return nil
+}

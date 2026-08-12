@@ -471,3 +471,42 @@ func (r *AdminRepository) GetAllAppointmentByID(ctx context.Context, appointment
 
 	return appointment, nil
 }
+
+func (r *AdminRepository) UpdateAppointment(ctx context.Context, appointmentID, adminID uuid.UUID, date, startTime, endTime time.Time) error {
+	query := `
+		UPDATE appointments
+		SET
+			date = $1,
+			start_time = $2,
+			end_time = $3
+		WHERE id = $4
+			AND client_id = $5
+			AND status = 'scheduled'
+	`
+
+	result, err := DB.ExecContext(
+		ctx,
+		query,
+		date,
+		startTime,
+		endTime,
+		appointmentID,
+		adminID,
+	)
+	if err != nil {
+		utils.LogError("updateAppointment repository (update error)", err)
+		return utils.InternalServerError("error updating appointment")
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		utils.LogError("updateAppointment repository (rows affected error)", err)
+		return utils.InternalServerError("error updating appointment")
+	}
+
+	if rowsAffected == 0 {
+		return utils.NotFoundError("appointment not found")
+	}
+
+	return nil
+}

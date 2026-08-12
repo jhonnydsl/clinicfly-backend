@@ -315,3 +315,49 @@ func (controller *AdminController) CancelAppointmentByAdmin(c *gin.Context) {
 		"message": "appointment cancelled successfully",
 	})
 }
+
+func (controller *AdminController) UpdateAppointment(c *gin.Context) {
+	ctx, cancel := utils.NewDBContext()
+	defer cancel()
+
+	adminIDValue, exists := c.Get("id")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "admin id not found in context"})
+		return
+	}
+
+	adminIDStr, ok := adminIDValue.(string)
+	if !ok {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid admin id in context"})
+		return
+	}
+
+	adminID, err := uuid.Parse(adminIDStr)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid admin id"})
+		return
+	}
+
+	appointmentID, err := uuid.Parse(c.Param("id"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid appointment id"})
+		return
+	}
+
+	var input dtos.AppointmentUpdateInput
+
+	if err := c.ShouldBindJSON(&input); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request body"})
+		return
+	}
+
+	err = controller.Service.UpdateAppointment(ctx, appointmentID, adminID, input)
+	if err != nil {
+		c.JSON(utils.GetStatusCode(err), gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "appointment updated successfully",
+	})
+}

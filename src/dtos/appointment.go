@@ -37,3 +37,9 @@ type PatientAppointmentOutput struct {
 	EndTime 		string `json:"end_time"`
 	Status 			string `json:"status"`
 }
+
+type AppointmentUpdateInput struct {
+	Date 		string `json:"date" binding:"required"`
+	StartTime 	string `json:"start_time" binding:"required"`
+	EndTime 	string `json:"end_time" binding:"required"`
+}
