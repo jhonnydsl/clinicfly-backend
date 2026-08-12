@@ -79,6 +79,7 @@ func (controller *AdminController) CreateAppointment(c *gin.Context) {
 func (controller *AdminController) GetAppointments(c *gin.Context) {
 	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
 	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "10"))
+	status := c.Query("status")
 
 	adminIDStr, exists := c.Get("id")
 	if !exists {
@@ -95,7 +96,7 @@ func (controller *AdminController) GetAppointments(c *gin.Context) {
 	ctx, cancel := utils.NewDBContext()
 	defer cancel()
 
-	appointments, total, err := controller.Service.GetAppointments(ctx, adminID, page, limit)
+	appointments, total, err := controller.Service.GetAppointments(ctx, adminID, status, page, limit)
 	if err != nil {
 		c.JSON(utils.GetStatusCode(err), gin.H{"error": err.Error()})
 		return
@@ -105,6 +106,7 @@ func (controller *AdminController) GetAppointments(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{
 		"data": appointments,
+		"status": status,
 		"page": page,
 		"limit": limit,
 		"total": total,

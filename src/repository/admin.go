@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"database/sql"
+	"strconv"
 	"time"
 
 	"github.com/google/uuid"
@@ -79,25 +80,43 @@ func (r *AdminRepository) CreateAppointment(ctx context.Context, input dtos.Appo
 	return id, nil
 }
 
-func (r *AdminRepository) GetAllAppointments(ctx context.Context, adminID uuid.UUID, page, limit int) ([]dtos.AppointmentOutput, int, error) {
+func (r *AdminRepository) GetAllAppointments(ctx context.Context, adminID uuid.UUID, status string, page, limit int) ([]dtos.AppointmentOutput, int, error) {
 	query := `SELECT a.id, a.patient_id, p.full_name, a.date, a.start_time, a.end_time, a.status
 	FROM appointments a
 	JOIN patients p ON p.id = a.patient_id
 	WHERE a.client_id = $1
-	ORDER BY p.full_name LIMIT $2 OFFSET $3;`
+	`
 
 	queryCount := `SELECT COUNT(*) FROM appointments WHERE client_id = $1`
 
+	args := []interface{}{adminID}
+
+	if status != "" {
+		query += ` AND a.status = $2`
+		queryCount += ` AND status = $2`
+		args = append(args, status)
+	}
+
+	query += ` ORDER BY p.full_name LIMIT $` +
+		strconv.Itoa(len(args)+1) +
+		` OFFSET $` +
+		strconv.Itoa(len(args)+2)
+
 	offset := (page - 1) * limit
+
+	countArgs := args
 
 	var total int
 
-	err := DB.QueryRowContext(ctx, queryCount, adminID).Scan(&total)
+	err := DB.QueryRowContext(ctx, queryCount, countArgs...).Scan(&total)
 	if err != nil {
+		utils.LogError("getAllAppointments repository (count error)", err)
 		return nil, 0, utils.InternalServerError("error getting total appointments")
 	}
 
-	rows, err := DB.QueryContext(ctx, query, adminID, limit, offset)
+	args = append(args, limit, offset)
+
+	rows, err := DB.QueryContext(ctx, query, args...)
 	if err != nil {
 		utils.LogError("getAppointments repository (error in SELECT)", err)
 		return nil, 0, utils.InternalServerError("error getting appointments")
@@ -132,6 +151,11 @@ func (r *AdminRepository) GetAllAppointments(ctx context.Context, adminID uuid.U
 			EndTime: endTime.Format("15:04"),
 			Status: status,
 		})
+	}
+
+	if err := rows.Err(); err != nil {
+		utils.LogError("getAllAppointments repository (rows error)", err)
+		return nil, 0, utils.InternalServerError("error reading appointments")
 	}
 
 	return appointments, total, nil

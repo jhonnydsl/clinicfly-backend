@@ -143,7 +143,7 @@ func (service *AdminService) CreateAppointment(ctx context.Context, input dtos.A
 	return id, nil
 }
 
-func (service *AdminService) GetAppointments(ctx context.Context, adminID uuid.UUID, page, limit int) ([]dtos.AppointmentOutput, int, error) {
+func (service *AdminService) GetAppointments(ctx context.Context, adminID uuid.UUID, status string, page, limit int) ([]dtos.AppointmentOutput, int, error) {
 	if page < 1 {
 		page = 1
 	}
@@ -151,14 +151,20 @@ func (service *AdminService) GetAppointments(ctx context.Context, adminID uuid.U
 		limit = 10
 	}
 
-	cacheKey := fmt.Sprintf("appointments_page_%d_limit_%d", page, limit)
+	switch status {
+	case "", "scheduled", "cancelled", "completed":
+	default:
+		return nil, 0, utils.BadRequestError("invalid appointment status")
+	}
+
+	cacheKey := fmt.Sprintf("appointments_admin_%s_status_%s_page_%d_limit_%d", adminID.String(), status, page, limit)
 
 	if cached, found := utils.Cache.Get(cacheKey); found {
 		cachedRes := cached.(*utils.AppointmentsCache)
 		return cachedRes.Data, cachedRes.Total, nil
 	}
 
-	appointments, total, err := service.Repo.GetAllAppointments(ctx, adminID, page, limit)
+	appointments, total, err := service.Repo.GetAllAppointments(ctx, adminID, status, page, limit)
 	if err != nil {
 		return nil, 0, err
 	}
