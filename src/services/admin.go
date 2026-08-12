@@ -388,6 +388,12 @@ func (service *AdminService) UpdateAppointment(ctx context.Context, appointmentI
 		return utils.BadRequestError("start time must be before end time")
 	}
 
+	appointment, err := service.Repo.GetAllAppointmentByID(ctx, appointmentID, adminID)
+	if err != nil {
+		utils.LogError("updateAppointment service (error getting appointment)", err)
+		return err
+	}
+
 	weekday := int(parsedDate.Weekday())
 
 	slots, err := service.Repo.GetCalendarSlotsByWeekday(ctx, adminID, weekday)
@@ -415,18 +421,18 @@ func (service *AdminService) UpdateAppointment(ctx context.Context, appointmentI
 		return err
 	}
 
-	for _, appointment := range appointments {
-		if appointment.ID == appointmentID {
+	for _, existingAppointment := range appointments {
+		if existingAppointment.ID == appointmentID {
 			continue
 		}
 
-		existingStart, err := utils.ParseTime(appointment.StartTime)
+		existingStart, err := utils.ParseTime(existingAppointment.StartTime)
 		if err != nil {
 			utils.LogError("updateAppointment service (error parsing existing start time)", err)
 			return utils.InternalServerError("error validating appointment")
 		}
 
-		existingEnd, err := utils.ParseTime(appointment.EndTime)
+		existingEnd, err := utils.ParseTime(existingAppointment.EndTime)
 		if err != nil {
 			utils.LogError("updateAppointment service (error parsing existing end time)", err)
 			return utils.InternalServerError("error validating appointment")
@@ -442,6 +448,33 @@ func (service *AdminService) UpdateAppointment(ctx context.Context, appointmentI
 		utils.LogError("updateAppointment service (error updating appointment)", err)
 		return err
 	}
+
+	body := utils.BuildAppointmentUpdateEmailBody(
+		appointment.Date,
+		appointment.StartTime,
+		appointment.EndTime,
+		parsedDate.Format("2006-01-02"),
+		startTime.Format("15:04"),
+		endTime.Format("15:04"),
+	)
+
+	go func() {
+		if err := service.Mailer.Send(
+			appointment.PatientEmail,
+			"Alteração de Agendamento",
+			body,
+		); err != nil {
+			utils.LogError("error sending patient appointment update email", err)
+		}
+
+		if err := service.Mailer.Send(
+			appointment.AdminEmail,
+			"Alteração de Agendamento",
+			body,
+		); err != nil {
+			utils.LogError("error sending admin appointment update email", err)
+		}
+	}()
 
 	return nil
 }
