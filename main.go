@@ -39,6 +39,10 @@ func main() {
 	{
 		routes.SetupAdminRoutes(v1, mailer)
 		routes.SetupPatientRoutes(v1, mailer)
+
+		auth := v1.Group("/auth")
+		routes.SetupAuthRoutes(auth, mailer)
+		
 		routes.SetupLoginRoutes(v1)
 	}
 

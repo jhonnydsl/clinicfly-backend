@@ -39,3 +39,38 @@ func BuildAppointmentUpdateEmailBody(oldDate, oldStartTime, oldEndTime, newDate,
 	<p><strong>Término:</strong> %s</p>
 	`, oldDate, oldStartTime, oldEndTime, newDate, newStartTime, newEndTime)
 }
+
+func BuildPasswordResetEmailBody(token string) string {
+	resetLink := fmt.Sprintf("http://localhost:3000/reset-password?token=%s", token)
+
+	return fmt.Sprintf(`
+	<h2>Recuperação de senha</h2>
+
+	<p>Recebemos uma solicitação para redefinir sua senha.</p>
+
+	<p>
+		Clique no botão abaixo para criar uma nova senha:
+	</p>
+
+	<p>
+		<a href="%s"
+			style="
+				display:inline-block;
+				padding:10px 20px;
+				background-color:#007bff;
+				color:#ffffff;
+				text-decoration:none;
+				border-radius:5px;
+			">
+			Redefinir senha
+		</a>
+	</p>
+
+	<p>Este link é válido por <strong>30 minutos</strong>.</p>
+
+	<p>
+		Se você não solicitou a recuperação de senha,
+		ignore esre e-mail.
+	</p>
+	`, resetLink)
+}
