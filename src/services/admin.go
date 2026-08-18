@@ -281,6 +281,53 @@ func (service *AdminService) DeleteCalendarSlot(ctx context.Context, slotID uuid
 	return service.Repo.DeleteCalendarSlot(ctx, slotID)
 }
 
+func (service *AdminService) UpdateCalendarSlot(ctx context.Context, slotID, adminID uuid.UUID, input dtos.CalendarSlotsInput) ([]dtos.CalendarSlotsOutput, error) {
+	if err := utils.ValidateCalendarSlotInput(input); err != nil {
+		return nil, utils.BadRequestError(err.Error())
+	}
+
+	start, err := utils.ParseTime(input.StartTime)
+	if err != nil {
+		utils.LogError("updateCalendarSlot service (error parsing start time)", err)
+		return nil, utils.BadRequestError("invalid start time format")
+	}
+
+	end, err := utils.ParseTime(input.EndTime)
+	if err != nil {
+		utils.LogError("updateCalendarSlot service (error parsing end time)", err)
+		return nil, utils.BadRequestError("invalid end time format")
+	}
+
+	slots, err := service.Repo.GetCalendarSlotsByWeekday(ctx, adminID, input.Weekday)
+	if err != nil {
+		utils.LogError("updateCalendarSlot service (error getting calendar slots)", err)
+		return nil, utils.InternalServerError("error getting calendar slots")
+	}
+
+	for _, slot := range slots {
+		if slot.ID == slotID {
+			continue
+		}
+
+		if start.Before(slot.EndTime) && end.After(slot.StartTime) {
+			return nil, utils.BadRequestError("calendar slot overlaps with an existing slot")
+		}
+	}
+
+	err = service.Repo.UpdateCalendarSlot(ctx, slotID, adminID, input)
+	if err != nil {
+		return nil, err
+	}
+
+	slotsOutput, err := service.Repo.GetCalendarSlots(ctx, adminID)
+	if err != nil {
+		utils.LogError("updateCalendarSlot service (error getting update slots)", err)
+		return nil, err
+	}
+
+	return slotsOutput, nil
+}
+
 func (service *AdminService) GetAvaliableSlots(ctx context.Context, adminID uuid.UUID, date string) ([]string, error) {
 	parsedDate, err := utils.ParseDate(date)
 	if err != nil {

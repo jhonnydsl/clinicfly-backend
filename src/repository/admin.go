@@ -422,6 +422,36 @@ func (r *AdminRepository) GetCalendarSlotsByWeekday(ctx context.Context, adminID
 	return slots, nil
 }
 
+func (r *AdminRepository) UpdateCalendarSlot(ctx context.Context, slotID, adminID uuid.UUID, input dtos.CalendarSlotsInput) error {
+	query := `
+		UPDATE calendar_slots
+		SET
+			weekday = $1,
+			start_time = $2,
+			end_time = $3
+		WHERE id = $4
+			AND client_id = $5
+	`
+
+	result, err := DB.ExecContext(ctx, query, input.Weekday, input.StartTime, input.EndTime, slotID, adminID)
+	if err != nil {
+		utils.LogError("updateCalendarSlot repository (update error)", err)
+		return utils.InternalServerError("error updating calendar slot")
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		utils.LogError("updateCalendarSlot repository (rows affected error)", err)
+		return utils.InternalServerError("error updating calendar slot")
+	}
+
+	if rowsAffected == 0 {
+		return utils.NotFoundError("calendar slot not found")
+	}
+
+	return nil
+}
+
 func (r *AdminRepository) CancelAppointmentByAdmin(ctx context.Context, appointmentID, adminID uuid.UUID) error {
 	query := `
 		UPDATE appointments

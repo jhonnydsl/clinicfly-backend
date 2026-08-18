@@ -121,3 +121,25 @@ func ValidatePatientInput(patient dtos.PatientInput) error {
 
 	return nil
 }
+
+func ValidateCalendarSlotInput(input dtos.CalendarSlotsInput) error {
+	if input.Weekday < 0 || input.Weekday > 6 {
+		return fmt.Errorf("invalid weekday")
+	}
+
+	startTime, err := time.Parse("15:04", input.StartTime)
+	if err != nil {
+		return fmt.Errorf("invalid start time format, expected HH:MM")
+	}
+
+	endTime, err := time.Parse("15:04", input.EndTime)
+	if err != nil {
+		return fmt.Errorf("invalid end time format, expected HH:MM")
+	}
+
+	if !startTime.Before(endTime) {
+		return fmt.Errorf("start time must be before end time")
+	}
+
+	return nil
+}

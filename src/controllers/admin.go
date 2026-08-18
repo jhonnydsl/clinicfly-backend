@@ -255,6 +255,44 @@ func (controller *AdminController) DeleteCalendarSlot(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "slot deleted successfully"})
 }
 
+func (controller *AdminController) UpdateCalendarSlot(c *gin.Context) {
+	var input dtos.CalendarSlotsInput
+
+	ctx, cancel := utils.NewDBContext()
+	defer cancel()
+
+	if err := c.ShouldBindJSON(&input); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request body"})
+		return
+	}
+
+	clientIDValue, exists := c.Get("id")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "client id not found in context"})
+		return
+	}
+
+	clientID, err := uuid.Parse(clientIDValue.(string))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid client id"})
+		return
+	}
+
+	slotID, err := uuid.Parse(c.Param("id"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid calendar slot id"})
+		return
+	}
+
+	slots, err := controller.Service.UpdateCalendarSlot(ctx, slotID, clientID, input)
+	if err != nil {
+		c.JSON(utils.GetStatusCode(err), gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, slots)
+}
+
 // Retornando para dar continuidade ao projeto
 
 func (controller *AdminController) GetAvaliableSlots(c *gin.Context) {
