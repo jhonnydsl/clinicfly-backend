@@ -531,3 +531,13 @@ func (service *AdminService) UpdateAppointment(ctx context.Context, appointmentI
 
 	return nil
 }
+
+func (service *AdminService) GetAdminProfile(ctx context.Context, adminID uuid.UUID) (dtos.AdminProfileOutput, error) {
+	profile, err := service.Repo.GetAdminProfile(ctx, adminID)
+	if err != nil {
+		utils.LogError("getAdminProfile service (error getting profile)", err)
+		return dtos.AdminProfileOutput{}, err
+	}
+
+	return profile, nil
+}

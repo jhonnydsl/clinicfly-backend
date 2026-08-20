@@ -564,3 +564,50 @@ func (r *AdminRepository) UpdateAppointment(ctx context.Context, appointmentID, 
 
 	return nil
 }
+
+func (r *AdminRepository) GetAdminProfile(ctx context.Context, adminID uuid.UUID) (dtos.AdminProfileOutput, error) {
+	query := `
+		SELECT
+			id,
+			full_name,
+			email,
+			birth_date,
+			crp,
+			bio,
+			profile_image_url,
+			office_address,
+			phone,
+			public_slug
+		FROM clients
+		WHERE
+			id = $1
+	`
+
+	var profile dtos.AdminProfileOutput
+	var birthDate time.Time
+
+	err := DB.QueryRowContext(ctx, query, adminID).Scan(
+		&profile.ID,
+		&profile.FullName,
+		&profile.Email,
+		&birthDate,
+		&profile.CRP,
+		&profile.Bio,
+		&profile.ProfileImageURL,
+		&profile.OfficeAddress,
+		&profile.Phone,
+		&profile.PublicSlug,
+	)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return dtos.AdminProfileOutput{}, utils.NotFoundError("admin profile not found")
+		}
+
+		utils.LogError("getProfileAdmin repository (query error)", err)
+		return dtos.AdminProfileOutput{}, utils.InternalServerError("internal server error")
+	}
+
+	profile.BirthDate = birthDate.Format("2006-01-02")
+
+	return profile, nil
+}

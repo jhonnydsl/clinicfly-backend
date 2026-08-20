@@ -401,3 +401,28 @@ func (controller *AdminController) UpdateAppointment(c *gin.Context) {
 		"message": "appointment updated successfully",
 	})
 }
+
+func (controller *AdminController) GetAdminProfile(c *gin.Context) {
+	adminIDStr, exists := c.Get("id")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "client id not found in context"})
+		return
+	}
+
+	adminID, err := uuid.Parse(adminIDStr.(string))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid client id"})
+		return
+	}
+
+	ctx, cancel := utils.NewDBContext()
+	defer cancel()
+
+	profile, err := controller.Service.GetAdminProfile(ctx, adminID)
+	if err != nil {
+		c.JSON(utils.GetStatusCode(err), gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, profile)
+}

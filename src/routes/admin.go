@@ -35,5 +35,6 @@ func SetupAdminRoutes(app *gin.RouterGroup, mailer *mailer.Mailer) {
 		protectedAdmin.DELETE("/calendar-slots/:id", adminController.DeleteCalendarSlot)
 		protectedAdmin.PATCH("/appointments/:id/cancel", adminController.CancelAppointmentByAdmin)
 		protectedAdmin.PATCH("/appointments/:id", adminController.UpdateAppointment)
+		protectedAdmin.GET("/me", adminController.GetAdminProfile)
 	}
 }
