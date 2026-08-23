@@ -308,3 +308,82 @@ func TestCalculateAge(t *testing.T) {
 		})
 	}
 }
+
+func TestValidateFullName(t *testing.T) {
+	fullName60 := strings.Repeat("x", 57) + " Ab"
+	fullName61 := strings.Repeat("x", 58) + " Ab"
+	
+	tests := []struct {
+		name string
+		fullName string
+		wantError bool
+	}{
+		{
+			name: "valid name",
+			fullName: "Jhonny Lima",
+			wantError: false,
+		},
+		{
+			name: "empty name",
+			fullName: "",
+			wantError: true,
+		},
+		{
+			name: "just spaces",
+			fullName: "              ",
+			wantError: true,
+		},
+		{
+			name: "4 characters",
+			fullName: "abcd",
+			wantError: true,
+		},
+		{
+			name: "5 characters",
+			fullName: "A Bcd",
+			wantError: false,
+		},
+		{
+			name: "60 characters",
+			fullName: fullName60,
+			wantError: false,
+		},
+		{
+			name: "61 characters",
+			fullName: fullName61,
+			wantError: true,
+		},
+		{
+			name: "just first name",
+			fullName: "Jhonnt",
+			wantError: true,
+		},
+		{
+			name: "name with spaces at the end",
+			fullName: "   Jhonny Lima   ",
+			wantError: false,
+		},
+		{
+			name: "name with multiple spaces",
+			fullName: "Jhonny  Lima",
+			wantError: false,
+		},
+		{
+			name: "name with accents",
+			fullName: "Jhónny Lima",
+			wantError: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := ValidateFullName(tt.fullName)
+
+			hasError := err != nil
+
+			if hasError != tt.wantError {
+				t.Errorf("test case %q failed", tt.name)
+			}
+		})
+	}
+}
