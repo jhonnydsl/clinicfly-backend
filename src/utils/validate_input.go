@@ -64,9 +64,10 @@ func ValidateAdminInput(admin dtos.AdminInput) error {
 
 func calculateAge(birth time.Time) int {
 	now := time.Now()
+
 	age := now.Year() - birth.Year()
 
-	if now.YearDay() < birth.YearDay() {
+	if now.Month() < birth.Month() || (now.Month() == birth.Month() && now.Day() < birth.Day()) {
 		age--
 	}
 
@@ -155,17 +156,17 @@ func ValidateFullName(fullName string) error {
 	if utf8.RuneCountInString(fullName) < 5 {
 		return fmt.Errorf("name must be at least 5 characters long")
 	}
-	 if utf8.RuneCountInString(fullName) > 60 {
+	if utf8.RuneCountInString(fullName) > 60 {
 		return fmt.Errorf("name must be at most 60 characters long")
-	 }
+	}
 
-	 parts := strings.Fields(fullName)
+	parts := strings.Fields(fullName)
 
-	 if len(parts) < 2 {
+	if len(parts) < 2 {
 		return fmt.Errorf("full name must include first and last name")
-	 }
+	}
 
-	 return nil
+	return nil
 }
 
 func ValidateEmail(email string) error {
@@ -193,7 +194,7 @@ func ValidateEmail(email string) error {
 
 func ValidateBirthDate(birthDate string) error {
 	birthDate = strings.TrimSpace(birthDate)
-	
+
 	if birthDate == "" {
 		return fmt.Errorf("birth date is required")
 	}
