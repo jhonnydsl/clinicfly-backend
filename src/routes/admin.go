@@ -36,5 +36,6 @@ func SetupAdminRoutes(app *gin.RouterGroup, mailer *mailer.Mailer) {
 		protectedAdmin.PATCH("/appointments/:id/cancel", adminController.CancelAppointmentByAdmin)
 		protectedAdmin.PATCH("/appointments/:id", adminController.UpdateAppointment)
 		protectedAdmin.GET("/me", adminController.GetAdminProfile)
+		protectedAdmin.PATCH("/me", adminController.UpdateAdminProfile)
 	}
 }

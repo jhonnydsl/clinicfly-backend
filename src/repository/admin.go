@@ -611,3 +611,94 @@ func (r *AdminRepository) GetAdminProfile(ctx context.Context, adminID uuid.UUID
 
 	return profile, nil
 }
+
+func (r *AdminRepository) UpdateAdminProfile(ctx context.Context, adminID uuid.UUID, input dtos.AdminProfileInput) error {
+	query := `
+		UPDATE clients
+			SET
+				full_name = COALESCE($1, full_name),
+				email = COALESCE($2, email),
+				birth_date = COALESCE($3, birth_date),
+				crp = COALESCE($4, crp),
+				bio = COALESCE($5, bio),
+				profile_image_url = COALESCE($6, profile_image_url),
+				office_address = COALESCE($7, office_address),
+				phone = COALESCE($8, phone),
+				public_slug = COALESCE($9, public_slug),
+				updated_at = NOW()
+			WHERE id = $10
+	`
+
+	result, err := DB.ExecContext(
+		ctx, 
+		query,
+		input.FullName,
+		input.Email,
+		input.BirthDate,
+		input.CRP,
+		input.Bio,
+		input.ProfileImageURL,
+		input.OfficeAddress,
+		input.Phone,
+		input.PublicSlug,
+		adminID,
+	)
+	if err != nil {
+		utils.LogError("updateAdminProfile repository (error updating profike)", err)
+		return utils.InternalServerError("internal server error") 
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		utils.LogError("updateAdminProfile repository (rows affected error)", err)
+		return utils.InternalServerError("internal server error")
+	}
+
+	if rowsAffected == 0 {
+		return utils.NotFoundError("profile not found")
+	}
+
+	return nil
+}
+
+func (r *AdminRepository) PublicSlugExists(ctx context.Context, slug string, adminID uuid.UUID) (bool, error) {
+	query := `
+		SELECT EXISTS (
+			SELECT 1
+			FROM clients
+			WHERE public_slug = $1
+				AND id <> $2
+		)
+	`
+
+	var exists bool
+
+	err := DB.QueryRowContext(ctx, query, slug, adminID).Scan(&exists)
+	if err != nil {
+		utils.LogError("publicSlugExists repository (query error)", err)
+		return false, utils.InternalServerError("internal server error")
+	}
+
+	return exists, nil
+}
+
+func (r *AdminRepository) EmailExists(ctx context.Context, email string, adminID uuid.UUID) (bool, error) {
+	query := `
+		SELECT EXISTS (
+			SELECT 1
+			FROM clients
+			WHERE email = $1
+				AND id <> $2
+		)
+	`
+
+	var exists bool
+
+	err := DB.QueryRowContext(ctx, query, email, adminID).Scan(&exists)
+	if err != nil {
+		utils.LogError("emailExists repository (query error)", err)
+		return false, utils.InternalServerError("internal server error")
+	}
+
+	return exists, nil
+}

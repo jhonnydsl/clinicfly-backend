@@ -541,3 +541,43 @@ func (service *AdminService) GetAdminProfile(ctx context.Context, adminID uuid.U
 
 	return profile, nil
 }
+
+func (service *AdminService) UpdateAdminProfile(ctx context.Context, adminID uuid.UUID, input dtos.AdminProfileInput) (dtos.AdminProfileOutput, error) {
+	if err := utils.ValidateAdminProfileInput(input); err != nil {
+		return dtos.AdminProfileOutput{}, utils.BadRequestError(err.Error())
+	}
+
+	if input.Email != nil {
+		exists, err := service.Repo.EmailExists(ctx, *input.Email, adminID)
+		if err != nil {
+			return dtos.AdminProfileOutput{}, err
+		}
+
+		if exists {
+			return dtos.AdminProfileOutput{}, utils.ConflictError("invalid profile data")
+		}
+	}
+
+	if input.PublicSlug != nil {
+		exists, err := service.Repo.PublicSlugExists(ctx, *input.PublicSlug, adminID)
+		if err != nil {
+			return dtos.AdminProfileOutput{}, err
+		}
+
+		if exists {
+			return dtos.AdminProfileOutput{}, utils.ConflictError("public slug already in use")
+		}
+	}
+
+	err := service.Repo.UpdateAdminProfile(ctx, adminID, input)
+	if err != nil {
+		return dtos.AdminProfileOutput{}, err
+	}
+
+	profile, err := service.Repo.GetAdminProfile(ctx, adminID)
+	if err != nil {
+		return dtos.AdminProfileOutput{}, err
+	}
+
+	return profile, nil
+}

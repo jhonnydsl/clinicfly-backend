@@ -426,3 +426,35 @@ func (controller *AdminController) GetAdminProfile(c *gin.Context) {
 
 	c.JSON(http.StatusOK, profile)
 }
+
+func (controller *AdminController) UpdateAdminProfile(c *gin.Context) {
+	adminIDStr, exists := c.Get("id")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "client id not found in context"})
+		return
+	}
+
+	adminID, err := uuid.Parse(adminIDStr.(string))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid client id"})
+		return
+	}
+
+	ctx, cancel := utils.NewDBContext()
+	defer cancel()
+
+	var input dtos.AdminProfileInput
+
+	if err := c.ShouldBindJSON(&input); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request body"})
+		return
+	}
+
+	profile, err := controller.Service.UpdateAdminProfile(ctx, adminID, input)
+	if err != nil {
+		c.JSON(utils.GetStatusCode(err), gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, profile)
+}
