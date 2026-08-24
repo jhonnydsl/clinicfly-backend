@@ -718,5 +718,73 @@ func TestValidateOfficeAddress(t *testing.T) {
 			}
 		})
 	}
+}
 
+func TestValidateCRP(t *testing.T) {
+	crp50 := strings.Repeat("x", 50)
+	crp51 := strings.Repeat("x", 51)
+
+	tests := []struct {
+		name string
+		crp string
+		wantError bool
+	}{
+		{
+			name: "valid crp",
+			crp: "CRP 06/123456",
+			wantError: false,
+		},
+		{
+			name: "empty crp",
+			crp: "",
+			wantError: false,
+		},
+		{
+			name: "just spaces",
+			crp: "           ",
+			wantError: false,
+		},
+		{
+			name: "50 characters",
+			crp: crp50,
+			wantError: false,
+		},
+		{
+			name: "51 characters",
+			crp: crp51,
+			wantError: true,
+		},
+		{
+			name: "with newline",
+			crp: "CRP\n06/123456",
+			wantError: true,
+		},
+		{
+			name: "with tab",
+			crp: "CRP\t06/123456",
+			wantError: true,
+		},
+		{
+			name: "with carriage return",
+			crp: "CRP\r06/123456",
+			wantError: true,
+		},
+		{
+			name: "spaces at the end",
+			crp: "   CRP 06/123456   ",
+			wantError: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := ValidateCRP(tt.crp)
+
+			hasError := err != nil
+
+			if hasError != tt.wantError {
+				t.Errorf("case test %q failed", tt.name)
+			}
+		})
+	}
 }
