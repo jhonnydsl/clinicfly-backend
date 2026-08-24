@@ -570,3 +570,83 @@ func TestValidatePublicSlug(t *testing.T) {
 		})
 	}
 }
+
+func TestValidateProfileImageURL(t *testing.T) {
+	prefix := "http://example.com/"
+
+	url2048 :=  prefix + strings.Repeat("x", 2048-len(prefix))
+	url2049 :=  prefix + strings.Repeat("x", 2049-len(prefix))
+	tests := []struct {
+		name string
+		url string
+		wantError bool
+	}{
+		{
+			name: "valid http url",
+			url: "http://example.com/image.jpg",
+			wantError: false,
+		},
+		{
+			name: "valid https url",
+			url: "https://example.com/image.jpg",
+			wantError: false,
+		},
+		{
+			name: "empty url",
+			url: "",
+			wantError: false,
+		},
+		{
+			name: "just spaces",
+			url: "           ",
+			wantError: false,
+		},
+		{
+			name: "spaces at the end",
+			url: "   https://example.com/image.jpg   ",
+			wantError: false,
+		},
+		{
+			name: "url with 2049 chars",
+			url: url2049,
+			wantError: true,
+		},
+		{
+			name: "with 2048 chars",
+			url: url2048,
+			wantError: false,
+		},
+		{
+			name: "invali url",
+			url: "not-a-url",
+			wantError: true,
+		},
+		{
+			name: "without protocol",
+			url: "example.com/image.jpg",
+			wantError: true,
+		},
+		{
+			name: "FTP",
+			url: "ftp://example.com/image.jpg",
+			wantError: true,
+		},
+		{
+			name: "without host",
+			url: "https:///image.jpg",
+			wantError: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := ValidateProfileImageURL(tt.url)
+
+			hasError := err != nil
+
+			if hasError != tt.wantError {
+				t.Errorf("case test %q failed", tt.name)
+			}
+		})
+	}
+}
