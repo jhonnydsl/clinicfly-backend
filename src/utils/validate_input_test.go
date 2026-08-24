@@ -650,3 +650,73 @@ func TestValidateProfileImageURL(t *testing.T) {
 		})
 	}
 }
+
+func TestValidateOfficeAddress(t *testing.T) {
+	address255 := strings.Repeat("x", 255)
+	address256 := strings.Repeat("x", 256)
+
+	tests := []struct {
+		name string
+		address string
+		wantError bool
+	}{
+		{
+			name: "valid address",
+			address: "Rua das Flores 123",
+			wantError: false,
+		},
+		{
+			name: "empty address",
+			address: "",
+			wantError: false,
+		},
+		{
+			name: "just spaces",
+			address: "          ",
+			wantError: false,
+		},
+		{
+			name: "4 characters",
+			address: "abcd",
+			wantError: true,
+		},
+		{
+			name: "5 characters",
+			address: "abcde",
+			wantError: false,
+		},
+		{
+			name: "255 char",
+			address: address255,
+			wantError: false,
+		},
+		{
+			name: "256 char",
+			address: address256,
+			wantError: true,
+		},
+		{
+			name: "with spaces",
+			address: "   Rua das Flores 123   ",
+			wantError: false,
+		},
+		{
+			name: "with accents",
+			address: "São Paulo",
+			wantError: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := ValidateOfficeAddress(tt.address)
+
+			hasError := err != nil
+
+			if hasError != tt.wantError {
+				t.Errorf("case test %q failed", tt.name)
+			}
+		})
+	}
+
+}
