@@ -461,3 +461,112 @@ func TestValidatePhone(t *testing.T) {
 		})
 	}
 }
+
+func TestValidatePublicSlug(t *testing.T) {
+	slug51 := strings.Repeat("x", 51)
+	slug50 := strings.Repeat("x", 50)
+
+	tests := []struct {
+		name string
+		slug string
+		wantError bool
+	}{
+		{
+			name: "valid slug",
+			slug: "jhonny-lima",
+			wantError: false,
+		},
+		{
+			name: "slug with number",
+			slug: "jhonny123",
+			wantError: false,
+		},
+		{
+			name: "just numebers",
+			slug: "123",
+			wantError: false,
+		},
+		{
+			name: "empty slug",
+			slug: "",
+			wantError: false,
+		},
+		{
+			name: "just spaces",
+			slug: "     ",
+			wantError: false,
+		},
+		{
+			name: "with 2 characters",
+			slug: "ab",
+			wantError: true,
+		},
+		{
+			name: "with 3 characters",
+			slug: "abc",
+			wantError: false,
+		},
+		{
+			name: "with 51 characters",
+			slug: slug51,
+			wantError: true,
+		},
+		{
+			name: "with 50 characters",
+			slug: slug50,
+			wantError: false,
+		},
+		{
+			name: "with uppercase letter",
+			slug: "Jhonny-lima",
+			wantError: true,
+		},
+		{
+			name: "with spaces",
+			slug: "jhonny lima",
+			wantError: true,
+		},
+		{
+			name: "invalid character",
+			slug: "-jhonny",
+			wantError: true,
+		},
+		{
+			name: "- at the end",
+			slug: "jhonny-",
+			wantError: true,
+		},
+		{
+			name: "duble --",
+			slug: "jhonny--lima",
+			wantError: true,
+		},
+		{
+			name: "with _",
+			slug: "jhonny_lima",
+			wantError: true,
+		},
+		{
+			name: "with .",
+			slug: "jhonny.lima",
+			wantError: true,
+		},
+		{
+			name: "complet with number at the end",
+			slug: "jhonny-lima-123",
+			wantError: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := ValidatePublicSlug(tt.slug)
+
+			hasError := err != nil
+
+			if hasError != tt.wantError {
+				t.Errorf("case test %q failed", tt.name)
+			}
+		})
+	}
+}
