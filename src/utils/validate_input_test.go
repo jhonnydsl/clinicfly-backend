@@ -387,3 +387,77 @@ func TestValidateFullName(t *testing.T) {
 		})
 	}
 }
+
+func TestValidatePhone(t *testing.T) {
+	phone15 := strings.Repeat("1", 15)
+	phone16 := strings.Repeat("1", 16)
+
+	tests := []struct {
+		name string
+		phone string
+		wantError bool
+	}{
+		{
+			name: "valid phone",
+			phone: "11987654321",
+			wantError: false,
+		},
+		{
+			name: "empty phone",
+			phone: "",
+			wantError: true,
+		},
+		{
+			name: "just spaces",
+			phone: "              ",
+			wantError: true,
+		},
+		{
+			name: "8 digits",
+			phone: "12345678",
+			wantError: true,
+		},
+		{
+			name: "9 digits",
+			phone: "123456789",
+			wantError: false,
+		},
+		{
+			name: "15 digits",
+			phone: phone15,
+			wantError: false,
+		},
+		{
+			name: "16 digits",
+			phone: phone16,
+			wantError: true,
+		},
+		{
+			name: "phone format",
+			phone: "(11) 987654321",
+			wantError: false,
+		},
+		{
+			name: "with +55",
+			phone: "+55 11 987654321",
+			wantError: false,
+		},
+		{
+			name: "jumbled letters",
+			phone: "11abc98765432166",
+			wantError: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := ValidatePhone(tt.phone)
+
+			hasError := err != nil
+
+			if hasError != tt.wantError {
+				t.Errorf("case test %q failed", tt.name)
+			}
+		})
+	}
+}

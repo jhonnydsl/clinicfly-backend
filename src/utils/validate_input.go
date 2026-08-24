@@ -218,12 +218,17 @@ func ValidateBirthDate(birthDate string) error {
 }
 
 var phoneRegex = regexp.MustCompile(`\D`)
+var invalidPhoneCharRegex = regexp.MustCompile(`[^\d\s()+-]`)
 
 func ValidatePhone(phone string) error {
 	phone = strings.TrimSpace(phone)
 
 	if phone == "" {
 		return fmt.Errorf("phone is required")
+	}
+
+	if invalidPhoneCharRegex.MatchString(phone) {
+		return fmt.Errorf("invalid phone number")
 	}
 
 	normalized := phoneRegex.ReplaceAllString(phone, "")
