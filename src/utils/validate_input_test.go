@@ -4,6 +4,8 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/jhonnydsl/clinify-backend/src/dtos"
 )
 
 func TestValidateBio(t *testing.T) {
@@ -779,6 +781,121 @@ func TestValidateCRP(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			err := ValidateCRP(tt.crp)
+
+			hasError := err != nil
+
+			if hasError != tt.wantError {
+				t.Errorf("case test %q failed", tt.name)
+			}
+		})
+	}
+}
+
+func stringPtr(value string) *string {
+	return &value
+}
+
+func TestValidateAdminProfileInput(t *testing.T) {
+	tests := []struct {
+		name string
+		input dtos.AdminProfileInput
+		wantError bool
+	}{
+		{
+			name: "empty input",
+			input: dtos.AdminProfileInput{},
+			wantError: false,
+		},
+		{
+			name: "valid input",
+			input: dtos.AdminProfileInput{
+				FullName: stringPtr("Jhonny Lima"),
+				Email: stringPtr("jhonnylima@gmail.com"),
+				BirthDate: stringPtr("2003-02-03"),
+				CRP: stringPtr("12345-6"),
+				Bio: stringPtr("Terapeuta a 10 anos"),
+				ProfileImageURL: stringPtr("https://example.com/image.jpeg"),
+				OfficeAddress: stringPtr("Rua alguma, numero 123"),
+				Phone: stringPtr("41 987654321"),
+				PublicSlug: stringPtr("jhonny-lima"),
+			},
+			wantError: false,
+		},
+		{
+			name: "invalid full name",
+			input: dtos.AdminProfileInput{
+				FullName: stringPtr("abc"),
+			},
+			wantError: true,
+		},
+		{
+			name: "invalid email",
+			input: dtos.AdminProfileInput{
+				Email: stringPtr("email invalido"),
+			},
+			wantError: true,
+		},
+		{
+			name: "invalid birth date",
+			input: dtos.AdminProfileInput{
+				BirthDate: stringPtr("0001"),
+			},
+			wantError: true,
+		},
+		{
+			name: "invalid CRP",
+			input: dtos.AdminProfileInput{
+				CRP: stringPtr(strings.Repeat("x", 51)),
+			},
+			wantError: true,
+		},
+		{
+			name: "invalid bio",
+			input: dtos.AdminProfileInput{
+				Bio: stringPtr("xx"),
+			},
+			wantError: true,
+		},
+		{
+			name: "invalide image url",
+			input: dtos.AdminProfileInput{
+				ProfileImageURL: stringPtr("link invalido"),
+			},
+			wantError: true,
+		},
+		{
+			name: "invalid office address",
+			input: dtos.AdminProfileInput{
+				OfficeAddress: stringPtr("123"),
+			},
+			wantError: true,
+		},
+		{
+			name: "invalid phone",
+			input: dtos.AdminProfileInput{
+				Phone: stringPtr("invalido"),
+			},
+			wantError: true,
+		},
+		{
+			name: "invalid public slug",
+			input: dtos.AdminProfileInput{
+				PublicSlug: stringPtr("---"),
+			},
+			wantError: true,
+		},
+		{
+			name: "empty field",
+			input: dtos.AdminProfileInput{
+				FullName: stringPtr(""),
+			},
+			wantError: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := ValidateAdminProfileInput(tt.input)
 
 			hasError := err != nil
 
