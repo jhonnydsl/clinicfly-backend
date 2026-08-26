@@ -43,6 +43,30 @@ func executeAuthMiddlewareTest(t *testing.T, claims jwt.MapClaims) (int, bool) {
 	return w.Code, called
 }
 
+func extecuteAdminMiddlewareTest(t *testing.T, role string) (int, bool) {
+	t.Helper()
+
+	router := gin.New()
+	router.Use(func(c *gin.Context) {
+		c.Set("role", "admin")
+		c.Next()
+	})
+	router.Use(AdminOnlyMiddleware())
+
+	called := false
+
+	router.GET("/test", func(c *gin.Context) {
+		called = true
+	})
+
+	req := httptest.NewRequest(http.MethodGet, "/test", nil)
+	w := httptest.NewRecorder()
+	
+	router.ServeHTTP(w, req)
+
+	return w.Code, called
+}
+
 func TestAuthMiddlewareMissingAuthorization(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 
@@ -234,5 +258,27 @@ func TestAuthMiddlewareInvalidIDType(t *testing.T) {
 
 	if called {
 		t.Error("expected handler not to be called")
+	}
+}
+
+func TestAdminOnlyMiddlewareValidRole(t *testing.T) {
+	status, called := extecuteAdminMiddlewareTest(t, "admin")
+	if status != http.StatusOK {
+		t.Errorf("expected status 200, got %d", status)
+	}
+
+	if !called {
+		t.Error("expected handler to be called")
+	}
+}
+
+func TestAdminOnlyMiddlewareInvalidRole(t *testing.T) {
+	status, called := extecuteAdminMiddlewareTest(t, "patient")
+	if status != http.StatusOK {
+		t.Errorf("expected status 200, got %d", status)
+	}
+
+	if !called {
+		t.Error("expected handler to be called")
 	}
 }
