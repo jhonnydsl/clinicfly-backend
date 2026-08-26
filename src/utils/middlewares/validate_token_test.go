@@ -43,15 +43,15 @@ func executeAuthMiddlewareTest(t *testing.T, claims jwt.MapClaims) (int, bool) {
 	return w.Code, called
 }
 
-func extecuteAdminMiddlewareTest(t *testing.T, role string) (int, bool) {
+func executeRoleMiddlewareTest(t *testing.T, role string, middleware gin.HandlerFunc) (int, bool) {
 	t.Helper()
 
 	router := gin.New()
 	router.Use(func(c *gin.Context) {
-		c.Set("role", "admin")
+		c.Set("role", role)
 		c.Next()
 	})
-	router.Use(AdminOnlyMiddleware())
+	router.Use(middleware)
 
 	called := false
 
@@ -262,7 +262,7 @@ func TestAuthMiddlewareInvalidIDType(t *testing.T) {
 }
 
 func TestAdminOnlyMiddlewareValidRole(t *testing.T) {
-	status, called := extecuteAdminMiddlewareTest(t, "admin")
+	status, called := executeRoleMiddlewareTest(t, "admin", AdminOnlyMiddleware())
 	if status != http.StatusOK {
 		t.Errorf("expected status 200, got %d", status)
 	}
@@ -273,12 +273,34 @@ func TestAdminOnlyMiddlewareValidRole(t *testing.T) {
 }
 
 func TestAdminOnlyMiddlewareInvalidRole(t *testing.T) {
-	status, called := extecuteAdminMiddlewareTest(t, "patient")
+	status, called := executeRoleMiddlewareTest(t, "patient", AdminOnlyMiddleware())
+	if status != http.StatusForbidden {
+		t.Errorf("expected status 403, got %d", status)
+	}
+
+	if called {
+		t.Error("expected handler to be called")
+	}
+}
+
+func TestPatientOnlyMiddlewareValidRole(t *testing.T) {
+	status, called := executeRoleMiddlewareTest(t, "patient", PatientOnlyMiddleware())
 	if status != http.StatusOK {
 		t.Errorf("expected status 200, got %d", status)
 	}
 
 	if !called {
 		t.Error("expected handler to be called")
+	}
+}
+
+func TestPatientOnlyMiddlewareInvalidRole(t *testing.T) {
+	status, called := executeRoleMiddlewareTest(t, "admin", PatientOnlyMiddleware())
+	if status != http.StatusForbidden {
+		t.Errorf("expected status 403, got %d", status)
+	}
+
+	if called {
+		t.Error("expected handler not to be called")
 	}
 }
