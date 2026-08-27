@@ -8,13 +8,12 @@ import (
 	"github.com/google/uuid"
 	"github.com/jhonnydsl/clinify-backend/src/dtos"
 	"github.com/jhonnydsl/clinify-backend/src/mailer"
-	"github.com/jhonnydsl/clinify-backend/src/repository"
 	"github.com/jhonnydsl/clinify-backend/src/utils"
 	"github.com/patrickmn/go-cache"
 )
 
 type AdminService struct {
-	Repo *repository.AdminRepository
+	Repo AdminRepository
 	Mailer *mailer.Mailer
 }
 
