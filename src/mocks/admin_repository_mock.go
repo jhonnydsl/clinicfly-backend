@@ -1,0 +1,179 @@
+package mocks
+
+import (
+	"context"
+	"time"
+
+	"github.com/google/uuid"
+	"github.com/jhonnydsl/clinify-backend/src/dtos"
+	"github.com/jhonnydsl/clinify-backend/src/services"
+)
+
+type MockAdminRepository struct{
+	CreateAdminID 		uuid.UUID
+	CreateAdminError 	error
+	ReceivedAdmin 		dtos.AdminInput
+}
+
+var _ services.AdminRepository = (*MockAdminRepository)(nil)
+
+func (m *MockAdminRepository) CreateAdmin(ctx context.Context, admin dtos.AdminInput, birthDate time.Time) (uuid.UUID, error) {
+	m.ReceivedAdmin = admin
+	
+	return m.CreateAdminID, m.CreateAdminError
+}
+
+func(m *MockAdminRepository) CancelAppointmentByAdmin(ctx context.Context, appointmentID, adminID uuid.UUID) error {
+	return nil
+}
+
+
+func (m *MockAdminRepository) CreateAppointment(
+	ctx context.Context,
+	input dtos.AppointmentInput,
+	parsedDate,
+	start,
+	end time.Time,
+	clientID uuid.UUID,
+) (uuid.UUID, error) {
+	return uuid.Nil, nil
+}
+
+func (m *MockAdminRepository) CreateCalendarSlot(
+	ctx context.Context,
+	input dtos.CalendarSlotsInput,
+	start,
+	end time.Time,
+	adminID uuid.UUID,
+) (uuid.UUID, error) {
+	return uuid.Nil, nil
+}
+
+func (m *MockAdminRepository) DeleteCalendarSlot(
+	ctx context.Context,
+	slotID uuid.UUID,
+) error {
+	return nil
+}
+
+func (m *MockAdminRepository) DeletePatient(
+	ctx context.Context,
+	patientID uuid.UUID,
+) error {
+	return nil
+}
+
+func (m *MockAdminRepository) EmailExists(
+	ctx context.Context,
+	email string,
+	adminID uuid.UUID,
+) (bool, error) {
+	return false, nil
+}
+
+func (m *MockAdminRepository) FindAdminIDBySlug(
+	ctx context.Context,
+	slug string,
+) (uuid.UUID, error) {
+	return uuid.Nil, nil
+}
+
+func (m *MockAdminRepository) GetAdminProfile(
+	ctx context.Context,
+	adminID uuid.UUID,
+) (dtos.AdminProfileOutput, error) {
+	return dtos.AdminProfileOutput{}, nil
+}
+
+func (m *MockAdminRepository) GetAllAppointmentByID(
+	ctx context.Context,
+	appointementID,
+	adminID uuid.UUID,
+) (dtos.AppointmentDetails, error) {
+	return dtos.AppointmentDetails{}, nil
+}
+
+func (m *MockAdminRepository) GetAllAppointments(
+	ctx context.Context,
+	adminID uuid.UUID,
+	status string,
+	page,
+	limit int,
+) ([]dtos.AppointmentOutput, int, error) {
+	return nil, 0, nil
+}
+
+func (m *MockAdminRepository) GetAppointmentsByDate(
+	ctx context.Context,
+	adminID uuid.UUID,
+	date string,
+) ([]dtos.AppointmentOutput, error) {
+	return nil, nil
+}
+
+func (m *MockAdminRepository) GetCalendarSlots(
+	ctx context.Context,
+	adminID uuid.UUID,
+) ([]dtos.CalendarSlotsOutput, error) {
+	return nil, nil
+}
+
+func (m *MockAdminRepository) GetCalendarSlotsByWeekday(
+	ctx context.Context,
+	adminID uuid.UUID,
+	weekday int,
+) ([]dtos.CalendarSlotDB, error) {
+	return nil, nil
+}
+
+func (m *MockAdminRepository) GetPatientEmailByID(
+	ctx context.Context,
+	patientID uuid.UUID,
+) (string, error) {
+	return "", nil
+}
+
+func (m *MockAdminRepository) GetPatients(
+	ctx context.Context,
+	adminID uuid.UUID,
+	page,
+	limit int,
+) ([]dtos.PatientOutput, int, error) {
+	return nil, 0, nil
+}
+
+func (m *MockAdminRepository) PublicSlugExists(
+	ctx context.Context,
+	slug string,
+	adminID uuid.UUID,
+) (bool, error) {
+	return false, nil
+}
+
+func (m *MockAdminRepository) UpdateAdminProfile(
+	ctx context.Context,
+	adminID uuid.UUID,
+	input dtos.AdminProfileInput,
+) error {
+	return nil
+}
+
+func (m *MockAdminRepository) UpdateAppointment(
+	ctx context.Context,
+	appointmentID,
+	adminID uuid.UUID,
+	date,
+	startTime,
+	endTime time.Time,
+) error {
+	return nil
+}
+
+func (m *MockAdminRepository) UpdateCalendarSlot(
+	ctx context.Context,
+	slotID,
+	adminID uuid.UUID,
+	input dtos.CalendarSlotsInput,
+) error {
+	return nil
+}
