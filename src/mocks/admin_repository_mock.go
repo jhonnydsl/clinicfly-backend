@@ -9,13 +9,34 @@ import (
 	"github.com/jhonnydsl/clinify-backend/src/services"
 )
 
+type MockMailer struct {
+	SendError error
+}
+
 type MockAdminRepository struct{
 	CreateAdminID 		uuid.UUID
 	CreateAdminError 	error
+
 	ReceivedAdmin 		dtos.AdminInput
+
+	GetCalendarSlotsByWeekdaySlots []dtos.CalendarSlotDB
+	GetCalendarSlotsByWeekdayError error
+
+	GetAppointmentsByDateAppointments []dtos.AppointmentOutput
+	GetAppointmentsByDateError error
+
+	CreateAppointmentID uuid.UUID
+	CreateAppointmentError error
+
+	GetPatientEmailByIDEmail string
+	GetPatientEmailByIDError error
 }
 
 var _ services.AdminRepository = (*MockAdminRepository)(nil)
+
+func (m *MockMailer) Send(to, object, body string) error {
+	return m.SendError
+}
 
 func (m *MockAdminRepository) CreateAdmin(ctx context.Context, admin dtos.AdminInput, birthDate time.Time) (uuid.UUID, error) {
 	m.ReceivedAdmin = admin
@@ -28,15 +49,8 @@ func(m *MockAdminRepository) CancelAppointmentByAdmin(ctx context.Context, appoi
 }
 
 
-func (m *MockAdminRepository) CreateAppointment(
-	ctx context.Context,
-	input dtos.AppointmentInput,
-	parsedDate,
-	start,
-	end time.Time,
-	clientID uuid.UUID,
-) (uuid.UUID, error) {
-	return uuid.Nil, nil
+func (m *MockAdminRepository) CreateAppointment(ctx context.Context, input dtos.AppointmentInput, parsedDate, start, end time.Time, clientID uuid.UUID) (uuid.UUID, error) {
+	return m.CreateAppointmentID, m.CreateAppointmentError
 }
 
 func (m *MockAdminRepository) CreateCalendarSlot(
@@ -103,12 +117,8 @@ func (m *MockAdminRepository) GetAllAppointments(
 	return nil, 0, nil
 }
 
-func (m *MockAdminRepository) GetAppointmentsByDate(
-	ctx context.Context,
-	adminID uuid.UUID,
-	date string,
-) ([]dtos.AppointmentOutput, error) {
-	return nil, nil
+func (m *MockAdminRepository) GetAppointmentsByDate(ctx context.Context, adminID uuid.UUID, date string) ([]dtos.AppointmentOutput, error) {
+	return m.GetAppointmentsByDateAppointments, m.GetAppointmentsByDateError
 }
 
 func (m *MockAdminRepository) GetCalendarSlots(
@@ -118,19 +128,12 @@ func (m *MockAdminRepository) GetCalendarSlots(
 	return nil, nil
 }
 
-func (m *MockAdminRepository) GetCalendarSlotsByWeekday(
-	ctx context.Context,
-	adminID uuid.UUID,
-	weekday int,
-) ([]dtos.CalendarSlotDB, error) {
-	return nil, nil
+func (m *MockAdminRepository) GetCalendarSlotsByWeekday(ctx context.Context, adminID uuid.UUID, weekday int) ([]dtos.CalendarSlotDB, error) {
+	return m.GetCalendarSlotsByWeekdaySlots, m.GetCalendarSlotsByWeekdayError
 }
 
-func (m *MockAdminRepository) GetPatientEmailByID(
-	ctx context.Context,
-	patientID uuid.UUID,
-) (string, error) {
-	return "", nil
+func (m *MockAdminRepository) GetPatientEmailByID(ctx context.Context, patientID uuid.UUID) (string, error) {
+	return m.GetPatientEmailByIDEmail, m.GetPatientEmailByIDError
 }
 
 func (m *MockAdminRepository) GetPatients(

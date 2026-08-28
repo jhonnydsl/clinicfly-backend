@@ -12,5 +12,5 @@ func ParseTime(timeStr string) (time.Time, error) {
 
 func ParseDateTime(dateStr, timeStr string) (time.Time, error) {
 	layout := "2006-01-02 15:04"
-	return time.Parse(layout, dateStr+" "+timeStr)
+	return time.ParseInLocation(layout, dateStr+" "+timeStr, time.Local)
 }

@@ -7,14 +7,17 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/jhonnydsl/clinify-backend/src/dtos"
-	"github.com/jhonnydsl/clinify-backend/src/mailer"
 	"github.com/jhonnydsl/clinify-backend/src/utils"
 	"github.com/patrickmn/go-cache"
 )
 
+type Mailer interface {
+	Send(to, object, body string) error
+}
+
 type AdminService struct {
 	Repo AdminRepository
-	Mailer *mailer.Mailer
+	Mailer Mailer
 }
 
 func (services *AdminService) CreateAdmin(ctx context.Context, admin dtos.AdminInput) (uuid.UUID, error) {
@@ -53,20 +56,30 @@ func (service *AdminService) CreateAppointment(ctx context.Context, input dtos.A
 		return uuid.UUID{}, utils.BadRequestError("invalid format date")
 	}
 
-	start, err := utils.ParseTime(input.StartTime)
+	startTime, err := utils.ParseTime(input.StartTime)
 	if err != nil {
 		utils.LogError("createAppoibtment service (error to parse star_time)", err)
 		return uuid.UUID{}, utils.BadRequestError("invalid format start_time")
 	}
 
-	end, err := utils.ParseTime(input.EndTime)
+	endTime, err := utils.ParseTime(input.EndTime)
 	if err != nil {
 		utils.LogError("createAppointment service (error to parse end_time)", err)
 		return uuid.UUID{}, utils.BadRequestError("invalid format end_time")
 	}
 
-	if !start.Before(end) {
+	if !startTime.Before(endTime) {
 		return uuid.UUID{}, utils.BadRequestError("start_time must be before end_time")
+	}
+
+	start, err := utils.ParseDateTime(input.Date, input.StartTime)
+	if err != nil {
+		return uuid.UUID{}, utils.BadRequestError("invalid format start_time")
+	}
+
+	end, err := utils.ParseDateTime(input.Date, input.EndTime)
+	if err != nil {
+		return uuid.UUID{}, utils.BadRequestError("invalid format end_time")
 	}
 
 	weekday := int(parsedDate.Weekday())
@@ -97,13 +110,13 @@ func (service *AdminService) CreateAppointment(ctx context.Context, input dtos.A
 	}
 
 	for _, appointment := range appointments {
-		appointmentStart, err := utils.ParseTime(appointment.StartTime)
+		appointmentStart, err := utils.ParseDateTime(appointment.Date, appointment.StartTime)
 		if err != nil {
 			utils.LogError("createAppointment service (error parsing appointment start_time)", err)
 			return uuid.UUID{}, utils.InternalServerError("error validating appointments")
 		}
 
-		appointmentEnd, err := utils.ParseTime(appointment.EndTime)
+		appointmentEnd, err := utils.ParseDateTime(appointment.Date, appointment.EndTime)
 		if err != nil {
 			utils.LogError("createAppointment service (error parsing appointment end_time)", err)
 			return uuid.UUID{}, utils.InternalServerError("error validating appointments")
