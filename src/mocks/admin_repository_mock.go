@@ -30,6 +30,12 @@ type MockAdminRepository struct{
 
 	GetPatientEmailByIDEmail string
 	GetPatientEmailByIDError error
+
+	GetAllAppointmentsAppointments []dtos.AppointmentOutput
+	GetAllAppointmentsTotal int
+	GetAllAppointmentsError error
+	GetAllAppointmentsPage int
+	GetAllAppointmentsLimit int
 }
 
 var _ services.AdminRepository = (*MockAdminRepository)(nil)
@@ -107,14 +113,11 @@ func (m *MockAdminRepository) GetAllAppointmentByID(
 	return dtos.AppointmentDetails{}, nil
 }
 
-func (m *MockAdminRepository) GetAllAppointments(
-	ctx context.Context,
-	adminID uuid.UUID,
-	status string,
-	page,
-	limit int,
-) ([]dtos.AppointmentOutput, int, error) {
-	return nil, 0, nil
+func (m *MockAdminRepository) GetAllAppointments(ctx context.Context, adminID uuid.UUID, status string, page, limit int) ([]dtos.AppointmentOutput, int, error) {
+	m.GetAllAppointmentsPage = page
+	m.GetAllAppointmentsLimit = limit
+
+	return m.GetAllAppointmentsAppointments, m.GetAllAppointmentsTotal, m.GetAllAppointmentsError
 }
 
 func (m *MockAdminRepository) GetAppointmentsByDate(ctx context.Context, adminID uuid.UUID, date string) ([]dtos.AppointmentOutput, error) {
