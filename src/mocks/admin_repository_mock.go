@@ -48,6 +48,8 @@ type MockAdminRepository struct{
 
 	GetCalendarSlotsSlots []dtos.CalendarSlotsOutput
 	GetCalendarSlotsError error
+
+	DeleteCalendarSlotError error
 }
 
 var _ services.AdminRepository = (*MockAdminRepository)(nil)
@@ -75,11 +77,8 @@ func (m *MockAdminRepository) CreateCalendarSlot(ctx context.Context, input dtos
 	return m.CreateCalendarSlotID, m.CreateCalendarSlotError
 }
 
-func (m *MockAdminRepository) DeleteCalendarSlot(
-	ctx context.Context,
-	slotID uuid.UUID,
-) error {
-	return nil
+func (m *MockAdminRepository) DeleteCalendarSlot(ctx context.Context, slotID uuid.UUID) error {
+	return m.DeleteCalendarSlotError
 }
 
 func (m *MockAdminRepository) DeletePatient(ctx context.Context, patientID uuid.UUID) error {

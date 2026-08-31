@@ -599,3 +599,26 @@ func TestGetCalendarSlotsRepositoryError(t *testing.T) {
 		t.Error("expected error, got nil")
 	}
 }
+
+func TestDeleteCalendarSlotInvalidID(t *testing.T) {
+	mockRepo := &mocks.MockAdminRepository{}
+	service := createTestService(mockRepo)
+
+	err := service.DeleteCalendarSlot(context.Background(), uuid.Nil)
+	if err == nil {
+		t.Error("expected error, got nil")
+	}
+}
+
+func TestDeleteCalendarSlotRepositoryError(t *testing.T) {
+	mockRepo := mocks.MockAdminRepository{
+		DeleteCalendarSlotError: errors.New("database error"),
+	}
+
+	service := createTestService(&mockRepo)
+
+	err := service.DeleteCalendarSlot(context.Background(), uuid.New())
+	if err == nil {
+		t.Error("expected error, got nil")
+	}
+}
