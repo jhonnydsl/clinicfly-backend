@@ -36,6 +36,10 @@ type MockAdminRepository struct{
 	GetAllAppointmentsError error
 	GetAllAppointmentsPage int
 	GetAllAppointmentsLimit int
+
+	GetPatientsPatients []dtos.PatientOutput
+	GetPatientsTotal int
+	GetPatientsError error
 }
 
 var _ services.AdminRepository = (*MockAdminRepository)(nil)
@@ -139,13 +143,8 @@ func (m *MockAdminRepository) GetPatientEmailByID(ctx context.Context, patientID
 	return m.GetPatientEmailByIDEmail, m.GetPatientEmailByIDError
 }
 
-func (m *MockAdminRepository) GetPatients(
-	ctx context.Context,
-	adminID uuid.UUID,
-	page,
-	limit int,
-) ([]dtos.PatientOutput, int, error) {
-	return nil, 0, nil
+func (m *MockAdminRepository) GetPatients(ctx context.Context, adminID uuid.UUID, page, limit int) ([]dtos.PatientOutput, int, error) {
+	return m.GetPatientsPatients, m.GetPatientsTotal, m.GetPatientsError
 }
 
 func (m *MockAdminRepository) PublicSlugExists(

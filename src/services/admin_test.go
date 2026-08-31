@@ -63,6 +63,16 @@ func createValidAppointmentOutput() dtos.AppointmentOutput {
 	}
 }
 
+func createValidPatientOutput() dtos.PatientOutput {
+	return dtos.PatientOutput{
+		ID:        uuid.New(),
+		FullName:  "Paciente Teste",
+		Email:     "paciente@gmail.com",
+		Phone:     "11999999999",
+		BirthDate: "1990-01-01",
+	}
+}
+
 func TestCreateAdminInvalidInput(t *testing.T) {
 	mockRepo := &mocks.MockAdminRepository{}
 
@@ -401,5 +411,48 @@ func TestGetAppointmentsFromCache(t *testing.T) {
 
 	if len(appointments) != len(expectedAppointemnts) {
 		t.Errorf("expected %d appointments, got %d", len(expectedAppointemnts), len(appointments))
+	}
+}
+
+func TestGetPatientsSuccess(t *testing.T) {
+	expectedPatients := []dtos.PatientOutput{
+		createValidPatientOutput(),
+	}
+
+	expectedTotal := 1
+
+	mockRepo := &mocks.MockAdminRepository{
+		GetPatientsPatients: expectedPatients,
+		GetPatientsTotal: expectedTotal,
+	}
+
+	service := createTestService(mockRepo)
+
+	patients, total, err := service.GetPatients(context.Background(), uuid.New(), 1, 10)
+	if err != nil {
+		t.Errorf("expected no error, got %v", err)
+	}
+
+	if total != expectedTotal {
+		t.Errorf("expected total %d, got %d", expectedTotal, total)
+	}
+
+	if len(patients) != len(expectedPatients) {
+		t.Errorf("expected %d patients, got %d", len(expectedPatients), len(patients))
+	}
+}
+
+func TestGetPatientsRepositoryError(t *testing.T) {
+	utils.Cache.Flush()
+	
+	mockRepo := &mocks.MockAdminRepository{
+		GetPatientsError: errors.New("database error"),
+	}
+
+	service := createTestService(mockRepo)
+
+	_, _, err := service.GetPatients(context.Background(), uuid.New(), 1, 10)
+	if err == nil {
+		t.Error("expected error, got nil")
 	}
 }
