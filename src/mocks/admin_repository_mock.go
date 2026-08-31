@@ -40,6 +40,8 @@ type MockAdminRepository struct{
 	GetPatientsPatients []dtos.PatientOutput
 	GetPatientsTotal int
 	GetPatientsError error
+
+	DeletePatientError error
 }
 
 var _ services.AdminRepository = (*MockAdminRepository)(nil)
@@ -80,11 +82,8 @@ func (m *MockAdminRepository) DeleteCalendarSlot(
 	return nil
 }
 
-func (m *MockAdminRepository) DeletePatient(
-	ctx context.Context,
-	patientID uuid.UUID,
-) error {
-	return nil
+func (m *MockAdminRepository) DeletePatient(ctx context.Context, patientID uuid.UUID) error {
+	return m.DeletePatientError
 }
 
 func (m *MockAdminRepository) EmailExists(

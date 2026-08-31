@@ -444,7 +444,7 @@ func TestGetPatientsSuccess(t *testing.T) {
 
 func TestGetPatientsRepositoryError(t *testing.T) {
 	utils.Cache.Flush()
-	
+
 	mockRepo := &mocks.MockAdminRepository{
 		GetPatientsError: errors.New("database error"),
 	}
@@ -452,6 +452,29 @@ func TestGetPatientsRepositoryError(t *testing.T) {
 	service := createTestService(mockRepo)
 
 	_, _, err := service.GetPatients(context.Background(), uuid.New(), 1, 10)
+	if err == nil {
+		t.Error("expected error, got nil")
+	}
+}
+
+func TestDeletePatientInvalidID(t *testing.T) {
+	mockRepo := &mocks.MockAdminRepository{}
+	service := createTestService(mockRepo)
+
+	err := service.DeletePatient(context.Background(), uuid.Nil)
+	if err == nil {
+		t.Error("expected error, got nil")
+	}
+}
+
+func TestDeletePatientRepositoryError(t *testing.T) {
+	mockRepo := &mocks.MockAdminRepository{
+		DeletePatientError: errors.New("database error"),
+	}
+
+	service := createTestService(mockRepo)
+
+	err := service.DeletePatient(context.Background(), uuid.New())
 	if err == nil {
 		t.Error("expected error, got nil")
 	}
