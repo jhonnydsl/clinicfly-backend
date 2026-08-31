@@ -73,6 +73,14 @@ func createValidPatientOutput() dtos.PatientOutput {
 	}
 }
 
+func createValidInputSlot() dtos.CalendarSlotsInput {
+	return dtos.CalendarSlotsInput{
+		Weekday: 5,
+		StartTime: "13:00",
+		EndTime: "14:00",
+	}
+}
+
 func TestCreateAdminInvalidInput(t *testing.T) {
 	mockRepo := &mocks.MockAdminRepository{}
 
@@ -475,6 +483,75 @@ func TestDeletePatientRepositoryError(t *testing.T) {
 	service := createTestService(mockRepo)
 
 	err := service.DeletePatient(context.Background(), uuid.New())
+	if err == nil {
+		t.Error("expected error, got nil")
+	}
+}
+
+func TestCreateCalendarSlotOverlapping(t *testing.T) {
+	mockRepo := &mocks.MockAdminRepository{
+		GetCalendarSlotsByWeekdaySlots: []dtos.CalendarSlotDB{
+			createValidCalendarSlot(),
+		},
+	}
+
+	service := createTestService(mockRepo)
+
+	input := createValidInputSlot()
+
+	_, err := service.CreateCalendarSlot(context.Background(), input, uuid.New())
+	if err == nil {
+		t.Error("expected error, got nil")
+	}
+}
+
+func TestCreateCalendarSlotSuccess(t *testing.T) {
+	expectedID := uuid.New()
+
+	mockRepo := &mocks.MockAdminRepository{
+		CreateCalendarSlotID: expectedID,
+	}
+
+	service := createTestService(mockRepo)
+
+	input := createValidInputSlot()
+
+	id, err := service.CreateCalendarSlot(context.Background(), input, uuid.New())
+	if err != nil {
+		t.Errorf("expected no error, got %v", err)
+	}
+
+	if id != expectedID {
+		t.Errorf("expected id %v, got %v", expectedID, id)
+	}
+}
+
+func TestCreateCalendarSlotGetSlotsError(t *testing.T) {
+	mockRepo := &mocks.MockAdminRepository{
+		GetCalendarSlotsByWeekdayError: errors.New("database error"),
+	}
+
+	service := createTestService(mockRepo)
+
+	input := createValidInputSlot()
+
+	_, err := service.CreateCalendarSlot(context.Background(), input, uuid.New())
+	if err == nil {
+		t.Error("expected error, got nil")
+	}
+}
+
+func TestCreateCalendarSlotCreateError(t *testing.T) {
+	mockRepo := &mocks.MockAdminRepository{
+		CreateCalendarSlotID: uuid.New(),
+		CreateCalendarSlotError: errors.New("database error"),
+	}
+
+	service := createTestService(mockRepo)
+
+	input := createValidInputSlot()
+
+	_, err := service.CreateCalendarSlot(context.Background(), input, uuid.New())
 	if err == nil {
 		t.Error("expected error, got nil")
 	}

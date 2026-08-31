@@ -42,6 +42,9 @@ type MockAdminRepository struct{
 	GetPatientsError error
 
 	DeletePatientError error
+
+	CreateCalendarSlotID uuid.UUID
+	CreateCalendarSlotError error
 }
 
 var _ services.AdminRepository = (*MockAdminRepository)(nil)
@@ -65,14 +68,8 @@ func (m *MockAdminRepository) CreateAppointment(ctx context.Context, input dtos.
 	return m.CreateAppointmentID, m.CreateAppointmentError
 }
 
-func (m *MockAdminRepository) CreateCalendarSlot(
-	ctx context.Context,
-	input dtos.CalendarSlotsInput,
-	start,
-	end time.Time,
-	adminID uuid.UUID,
-) (uuid.UUID, error) {
-	return uuid.Nil, nil
+func (m *MockAdminRepository) CreateCalendarSlot(ctx context.Context, input dtos.CalendarSlotsInput, start, end time.Time, adminID uuid.UUID) (uuid.UUID, error) {
+	return m.CreateCalendarSlotID, m.CreateCalendarSlotError
 }
 
 func (m *MockAdminRepository) DeleteCalendarSlot(

@@ -250,8 +250,14 @@ func (service *AdminService) CreateCalendarSlot(ctx context.Context, input dtos.
 		return uuid.UUID{}, utils.InternalServerError("error getting calendar slots")
 	}
 
+	startMinutes := start.Hour()*60 + start.Minute()
+	endMinutes := end.Hour()*60 + end.Minute()
+
 	for _, slot := range slots {
-		if start.Before(slot.EndTime) && end.After(slot.StartTime) {
+		slotStart := slot.StartTime.Hour()*60 + slot.StartTime.Minute()
+		slotEnd := slot.EndTime.Hour()*60 + slot.EndTime.Minute()
+
+		if startMinutes < slotEnd && endMinutes > slotStart {
 			return uuid.UUID{}, utils.BadRequestError("calendar slot overlaps with an existing slot")
 		}
 	}
