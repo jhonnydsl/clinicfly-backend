@@ -50,6 +50,8 @@ type MockAdminRepository struct{
 	GetCalendarSlotsError error
 
 	DeleteCalendarSlotError error
+
+	UpdateCalendarSlotError error
 }
 
 var _ services.AdminRepository = (*MockAdminRepository)(nil)
@@ -169,11 +171,6 @@ func (m *MockAdminRepository) UpdateAppointment(
 	return nil
 }
 
-func (m *MockAdminRepository) UpdateCalendarSlot(
-	ctx context.Context,
-	slotID,
-	adminID uuid.UUID,
-	input dtos.CalendarSlotsInput,
-) error {
-	return nil
+func (m *MockAdminRepository) UpdateCalendarSlot(ctx context.Context, slotID, adminID uuid.UUID, input dtos.CalendarSlotsInput) error {
+	return m.UpdateCalendarSlotError
 }

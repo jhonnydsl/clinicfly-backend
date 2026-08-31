@@ -622,3 +622,73 @@ func TestDeleteCalendarSlotRepositoryError(t *testing.T) {
 		t.Error("expected error, got nil")
 	}
 }
+
+func TestUpdateCalendarSlotOverlapping(t *testing.T) {
+	slotID := uuid.New()
+
+	existingSlot := createValidCalendarSlot()
+	existingSlot.ID = uuid.New()
+
+	slotToUpdate := createValidCalendarSlot()
+	slotToUpdate.ID = slotID
+
+	mockRepo := &mocks.MockAdminRepository{
+		GetCalendarSlotsByWeekdaySlots: []dtos.CalendarSlotDB{
+			existingSlot,
+			slotToUpdate,
+		},
+	}
+
+	service := createTestService(mockRepo)
+
+	input := createValidInputSlot()
+	input.StartTime = "17:00"
+	input.EndTime = "19:00"
+
+	_, err := service.UpdateCalendarSlot(context.Background(), slotID, uuid.New(), input)
+	if err == nil {
+		t.Error("expected error, got nil")
+	}
+}
+
+func TestUpdateCalendarSlotGetSlotsError(t *testing.T) {
+	mockRepo := &mocks.MockAdminRepository{
+		GetCalendarSlotsByWeekdayError: errors.New("database error"),
+	}
+
+	service := createTestService(mockRepo)
+	input := createValidInputSlot()
+
+	_, err := service.UpdateCalendarSlot(context.Background(), uuid.New(), uuid.New(), input)
+	if err == nil {
+		t.Error("expected error, got nil")
+	}
+}
+
+func TestUpdateCalendarSlotUpdateError(t *testing.T) {
+	mockRepo := &mocks.MockAdminRepository{
+		UpdateCalendarSlotError: errors.New("database error"),
+	}
+
+	service := createTestService(mockRepo)
+	input := createValidInputSlot()
+
+	_, err := service.UpdateCalendarSlot(context.Background(), uuid.New(), uuid.New(), input)
+	if err == nil {
+		t.Error("expected error, got nil")
+	}
+}
+
+func TestUpdateCalendarSlotGetUpdateSlotsError(t *testing.T) {
+	mockRepo := &mocks.MockAdminRepository{
+		GetCalendarSlotsError: errors.New("database error"),
+	}
+
+	service := createTestService(mockRepo)
+	input := createValidInputSlot()
+
+	_, err := service.UpdateCalendarSlot(context.Background(), uuid.New(), uuid.New(), input)
+	if err == nil {
+		t.Error("expected error, got nil")
+	}
+}
