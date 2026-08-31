@@ -45,6 +45,9 @@ type MockAdminRepository struct{
 
 	CreateCalendarSlotID uuid.UUID
 	CreateCalendarSlotError error
+
+	GetCalendarSlotsSlots []dtos.CalendarSlotsOutput
+	GetCalendarSlotsError error
 }
 
 var _ services.AdminRepository = (*MockAdminRepository)(nil)
@@ -124,11 +127,8 @@ func (m *MockAdminRepository) GetAppointmentsByDate(ctx context.Context, adminID
 	return m.GetAppointmentsByDateAppointments, m.GetAppointmentsByDateError
 }
 
-func (m *MockAdminRepository) GetCalendarSlots(
-	ctx context.Context,
-	adminID uuid.UUID,
-) ([]dtos.CalendarSlotsOutput, error) {
-	return nil, nil
+func (m *MockAdminRepository) GetCalendarSlots(ctx context.Context, adminID uuid.UUID) ([]dtos.CalendarSlotsOutput, error) {
+	return m.GetCalendarSlotsSlots, m.GetCalendarSlotsError
 }
 
 func (m *MockAdminRepository) GetCalendarSlotsByWeekday(ctx context.Context, adminID uuid.UUID, weekday int) ([]dtos.CalendarSlotDB, error) {

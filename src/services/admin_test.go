@@ -81,6 +81,17 @@ func createValidInputSlot() dtos.CalendarSlotsInput {
 	}
 }
 
+func createValidCalendarSlotsOutput() []dtos.CalendarSlotsOutput {
+	return []dtos.CalendarSlotsOutput{
+		{
+			ID:        uuid.New(),
+			Weekday:   "fryday",
+			StartTime: "08:00",
+			EndTime:   "18:00",
+		},
+	}
+}
+
 func TestCreateAdminInvalidInput(t *testing.T) {
 	mockRepo := &mocks.MockAdminRepository{}
 
@@ -552,6 +563,38 @@ func TestCreateCalendarSlotCreateError(t *testing.T) {
 	input := createValidInputSlot()
 
 	_, err := service.CreateCalendarSlot(context.Background(), input, uuid.New())
+	if err == nil {
+		t.Error("expected error, got nil")
+	}
+}
+
+func TestGetCalendarSlotsSuccess(t *testing.T) {
+	expectedSlots := createValidCalendarSlotsOutput()
+
+	mockRepo := &mocks.MockAdminRepository{
+		GetCalendarSlotsSlots: expectedSlots,
+	}
+
+	service := createTestService(mockRepo)
+
+	slots, err := service.GetCalendarSlots(context.Background(), uuid.New())
+	if err != nil {
+		t.Errorf("expected no error, got %v", err)
+	}
+
+	if len(slots) != len(expectedSlots) {
+		t.Errorf("expected %d slots, got %d", len(expectedSlots), len(slots))
+	}
+}
+
+func TestGetCalendarSlotsRepositoryError(t *testing.T) {
+	mockRepo := &mocks.MockAdminRepository{
+		GetCalendarSlotsError: errors.New("database error"),
+	}
+
+	service := createTestService(mockRepo)
+
+	_, err := service.GetCalendarSlots(context.Background(), uuid.New())
 	if err == nil {
 		t.Error("expected error, got nil")
 	}
