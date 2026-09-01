@@ -92,6 +92,21 @@ func createValidCalendarSlotsOutput() []dtos.CalendarSlotsOutput {
 	}
 }
 
+func createValidAdminProfile() dtos.AdminProfileOutput {
+	return dtos.AdminProfileOutput{
+		ID:              uuid.New(),
+		FullName:        "Dr. João Silva",
+		Email:           "joao@email.com",
+		BirthDate:       "1990-01-01",
+		CRP:             "123456",
+		Bio:             "Psicólogo clínico",
+		ProfileImageURL: "https://example.com/profile.jpg",
+		OfficeAddress:   "Rua Exemplo, 123",
+		Phone:           "11999999999",
+		PublicSlug:      "joao-silva",
+	}
+}
+
 func TestCreateAdminInvalidInput(t *testing.T) {
 	mockRepo := &mocks.MockAdminRepository{}
 
@@ -916,5 +931,37 @@ func TestUpdateAppointmentGetAppointmentsError(t *testing.T){
 	err := service.UpdateAppointment(context.Background(), appointmentID, uuid.New(), input)
 	if err == nil {
 		t.Error("expected error, got nil")
+	}
+}
+
+func TestGetAdminProfileRepositoryError(t *testing.T) {
+	mockRepo := &mocks.MockAdminRepository{
+		GetAdminProfileError: errors.New("database error"),
+	}
+
+	service := createTestService(mockRepo)
+
+	_, err := service.GetAdminProfile(context.Background(), uuid.New())
+	if err == nil {
+		t.Error("expected error, got nil")
+	}
+}
+
+func TestAdminProfileSuccess(t *testing.T) {
+	expectedProfile := createValidAdminProfile()
+
+	mockRepo := &mocks.MockAdminRepository{
+		GetAdminProfileOutput: expectedProfile,
+	}
+
+	service := createTestService(mockRepo)
+
+	profile, err := service.GetAdminProfile(context.Background(), uuid.New())
+	if err != nil {
+		t.Errorf("expected no error, got %v", err)
+	}
+
+	if profile != expectedProfile {
+		t.Errorf("expected profile %+v, got %+v", expectedProfile, profile)
 	}
 }

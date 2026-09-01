@@ -58,7 +58,10 @@ type MockAdminRepository struct{
 
 	CancelAppointmentByAdminError error
 
-	UpdateAppointmentError error 
+	UpdateAppointmentError error
+
+	GetAdminProfileError error
+	GetAdminProfileOutput dtos.AdminProfileOutput
 }
 
 var _ services.AdminRepository = (*MockAdminRepository)(nil)
@@ -109,11 +112,8 @@ func (m *MockAdminRepository) FindAdminIDBySlug(
 	return uuid.Nil, nil
 }
 
-func (m *MockAdminRepository) GetAdminProfile(
-	ctx context.Context,
-	adminID uuid.UUID,
-) (dtos.AdminProfileOutput, error) {
-	return dtos.AdminProfileOutput{}, nil
+func (m *MockAdminRepository) GetAdminProfile(ctx context.Context, adminID uuid.UUID) (dtos.AdminProfileOutput, error) {
+	return m.GetAdminProfileOutput, m.GetAdminProfileError
 }
 
 func (m *MockAdminRepository) GetAllAppointmentByID(ctx context.Context, appointementID, adminID uuid.UUID) (dtos.AppointmentDetails, error) {
