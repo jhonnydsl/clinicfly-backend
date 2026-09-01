@@ -52,6 +52,11 @@ type MockAdminRepository struct{
 	DeleteCalendarSlotError error
 
 	UpdateCalendarSlotError error
+
+	GetAllAppointmentByIDAppointment dtos.AppointmentDetails
+	GetAllAppointmentByIDError error
+
+	CancelAppointmentByAdminError error
 }
 
 var _ services.AdminRepository = (*MockAdminRepository)(nil)
@@ -67,7 +72,7 @@ func (m *MockAdminRepository) CreateAdmin(ctx context.Context, admin dtos.AdminI
 }
 
 func(m *MockAdminRepository) CancelAppointmentByAdmin(ctx context.Context, appointmentID, adminID uuid.UUID) error {
-	return nil
+	return m.CancelAppointmentByAdminError
 }
 
 
@@ -109,12 +114,8 @@ func (m *MockAdminRepository) GetAdminProfile(
 	return dtos.AdminProfileOutput{}, nil
 }
 
-func (m *MockAdminRepository) GetAllAppointmentByID(
-	ctx context.Context,
-	appointementID,
-	adminID uuid.UUID,
-) (dtos.AppointmentDetails, error) {
-	return dtos.AppointmentDetails{}, nil
+func (m *MockAdminRepository) GetAllAppointmentByID(ctx context.Context, appointementID, adminID uuid.UUID) (dtos.AppointmentDetails, error) {
+	return m.GetAllAppointmentByIDAppointment, m.GetAllAppointmentByIDError
 }
 
 func (m *MockAdminRepository) GetAllAppointments(ctx context.Context, adminID uuid.UUID, status string, page, limit int) ([]dtos.AppointmentOutput, int, error) {

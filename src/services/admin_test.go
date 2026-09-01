@@ -754,3 +754,29 @@ func TestGetAvailableSlotsInvalidDate(t *testing.T) {
 		t.Error("expected error, got nil")
 	}
 }
+
+func TestCancelAppointmentByAdminGetAppointmentError(t *testing.T) {
+	mockRepo := &mocks.MockAdminRepository{
+		GetAllAppointmentByIDError: errors.New("database error"),
+	}
+
+	service := createTestService(mockRepo)
+
+	err := service.CancelAppointmentByAdmin(context.Background(), uuid.New(), uuid.New())
+	if err == nil {
+		t.Error("expected error, got nil")
+	}
+}
+
+func TestCancelAppointmentByAdminCancelError(t *testing.T) {
+	mockRepo := &mocks.MockAdminRepository{
+		CancelAppointmentByAdminError: errors.New("database error"),
+	}
+
+	service := createTestService(mockRepo)
+
+	err := service.CancelAppointmentByAdmin(context.Background(), uuid.New(), uuid.New())
+	if err == nil {
+		t.Error("expected error, got nil")
+	}
+}
