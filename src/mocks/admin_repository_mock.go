@@ -57,6 +57,8 @@ type MockAdminRepository struct{
 	GetAllAppointmentByIDError error
 
 	CancelAppointmentByAdminError error
+
+	UpdateAppointmentError error 
 }
 
 var _ services.AdminRepository = (*MockAdminRepository)(nil)
@@ -161,15 +163,8 @@ func (m *MockAdminRepository) UpdateAdminProfile(
 	return nil
 }
 
-func (m *MockAdminRepository) UpdateAppointment(
-	ctx context.Context,
-	appointmentID,
-	adminID uuid.UUID,
-	date,
-	startTime,
-	endTime time.Time,
-) error {
-	return nil
+func (m *MockAdminRepository) UpdateAppointment(ctx context.Context, appointmentID, adminID uuid.UUID, date, startTime, endTime time.Time) error {
+	return m.UpdateAppointmentError
 }
 
 func (m *MockAdminRepository) UpdateCalendarSlot(ctx context.Context, slotID, adminID uuid.UUID, input dtos.CalendarSlotsInput) error {

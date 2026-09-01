@@ -780,3 +780,141 @@ func TestCancelAppointmentByAdminCancelError(t *testing.T) {
 		t.Error("expected error, got nil")
 	}
 }
+
+func TestUpdateAppointmentInvalidDate(t *testing.T) {
+	mockRepo := &mocks.MockAdminRepository{}
+	service := createTestService(mockRepo)
+
+	input := dtos.AppointmentUpdateInput{
+		Date: "data-invalida",
+		StartTime: "10:00",
+		EndTime: "11:00",
+	}
+
+	err := service.UpdateAppointment(context.Background(), uuid.New(), uuid.New(), input)
+	if err == nil {
+		t.Error("expected error, got nil")
+	}
+}
+
+func TestUpdateAppointmentOutsideAvailability(t *testing.T) {
+	appointmentID := uuid.New()
+
+	mockRepo := &mocks.MockAdminRepository{
+		GetAllAppointmentByIDAppointment: dtos.AppointmentDetails{
+			ID: appointmentID,
+		},
+		GetCalendarSlotsByWeekdaySlots: []dtos.CalendarSlotDB{
+			createValidCalendarSlot(),
+		},
+	}
+
+	service := createTestService(mockRepo)
+
+	input := dtos.AppointmentUpdateInput{
+		Date: "2026-08-28",
+		StartTime: "19:00",
+		EndTime: "20:00",
+	}
+
+	err := service.UpdateAppointment(context.Background(), appointmentID, uuid.New(), input)
+	if err == nil {
+		t.Error("expected error, got nil")
+	}
+}
+
+func TestUpdateAppointmentOccupiedTime(t *testing.T) {
+	appointmentID := uuid.New()
+	otherAppointmentID := uuid.New()
+
+	mockRepo := &mocks.MockAdminRepository{
+		GetAllAppointmentByIDAppointment: dtos.AppointmentDetails{
+			ID:        appointmentID,
+			Date:      "2026-08-28",
+			StartTime: "08:00",
+			EndTime:   "09:00",
+		},
+		GetCalendarSlotsByWeekdaySlots: []dtos.CalendarSlotDB{
+			createValidCalendarSlot(),
+		},
+		GetAppointmentsByDateAppointments: []dtos.AppointmentOutput{
+			{
+				ID:        appointmentID,
+				StartTime: "08:00",
+				EndTime:   "09:00",
+			},
+			{
+				ID:        otherAppointmentID,
+				StartTime: "10:00",
+				EndTime:   "11:00",
+			},
+		},
+	}
+
+	service := createTestService(mockRepo)
+
+	input := dtos.AppointmentUpdateInput{
+		Date:      "2026-08-28",
+		StartTime: "10:30",
+		EndTime:   "11:30",
+	}
+
+	err := service.UpdateAppointment(context.Background(), appointmentID, uuid.New(), input)
+	if err == nil {
+		t.Error("expected error, got nil")
+	}
+}
+
+func TestUpdateAppointmentUpdateError(t *testing.T) {
+	appointmentID := uuid.New()
+
+	mockRepo := &mocks.MockAdminRepository{
+		GetAllAppointmentByIDAppointment: dtos.AppointmentDetails{
+			ID: appointmentID,
+		},
+		GetCalendarSlotsByWeekdaySlots: []dtos.CalendarSlotDB{
+			createValidCalendarSlot(),
+		},
+		UpdateCalendarSlotError: errors.New("database error"),
+	}
+
+	service := createTestService(mockRepo)
+
+	input := dtos.AppointmentUpdateInput{
+		Date:      "2026-08-28",
+		StartTime: "10:00",
+		EndTime:   "11:00",
+	}
+
+	err := service.UpdateAppointment(context.Background(), appointmentID, uuid.New(), input)
+	if err == nil {
+		t.Error("expected error, got nil")
+	}
+}
+
+func TestUpdateAppointmentGetAppointmentsError(t *testing.T){
+	appointmentID := uuid.New()
+
+	mockRepo := &mocks.MockAdminRepository{
+		GetAllAppointmentByIDAppointment: dtos.AppointmentDetails{
+			ID: appointmentID,
+		},
+		GetCalendarSlotsByWeekdaySlots: []dtos.CalendarSlotDB{
+			createValidCalendarSlot(),
+		},
+		GetAppointmentsByDateError: errors.New("database error"),
+	}
+
+	service := createTestService(mockRepo)
+
+	input := dtos.AppointmentUpdateInput{
+		Date:      "2026-08-28",
+		StartTime: "10:00",
+		EndTime:   "11:00",
+	}
+
+	err := service.UpdateAppointment(context.Background(), appointmentID, uuid.New(), input)
+	if err == nil {
+		t.Error("expected error, got nil")
+	}
+}
