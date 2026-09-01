@@ -965,3 +965,126 @@ func TestAdminProfileSuccess(t *testing.T) {
 		t.Errorf("expected profile %+v, got %+v", expectedProfile, profile)
 	}
 }
+
+func TestUpdateAdminProfileInvalidInput(t *testing.T) {
+	mockRepo := &mocks.MockAdminRepository{}
+	service := createTestService(mockRepo)
+	name := "jho"
+
+	input := dtos.AdminProfileInput{
+		FullName: &name,
+	}
+
+	_, err := service.UpdateAdminProfile(context.Background(), uuid.New(), input)
+	if err == nil {
+		t.Error("expected error, got nil")
+	}
+}
+
+func TestUpdateAdminProfileEmailAlreadyExists(t *testing.T) {
+	mockRepo := &mocks.MockAdminRepository{
+		EmailExistsResult: true,
+	}
+
+	service := createTestService(mockRepo)
+	email := "outro@email.com"
+
+	input := dtos.AdminProfileInput{
+		Email: &email,
+	}
+
+	_, err := service.UpdateAdminProfile(context.Background(), uuid.New(), input)
+	if err == nil {
+		t.Error("expected error, got nil")
+	}
+}
+
+func TestUpdateAdminProfilePublicSlugAlreadyExists(t *testing.T) {
+	mockRepo := &mocks.MockAdminRepository{
+		PublicSlugExistsResult: true,
+	}
+
+	service := createTestService(mockRepo)
+	slug := "jhonny-lima"
+	
+	input := dtos.AdminProfileInput{
+		PublicSlug: &slug,
+	}
+
+	_, err := service.UpdateAdminProfile(context.Background(), uuid.New(), input)
+	if err == nil {
+		t.Error("expected error, got nil")
+	}
+}
+
+func TestUpdateAdminProfileEmailExistsError(t *testing.T) {
+	mockRepo := &mocks.MockAdminRepository{
+		EmailExistsError: errors.New("database error"),
+	}
+	
+	service := createTestService(mockRepo)
+	email := "jhonny@email.com"
+
+	input := dtos.AdminProfileInput{
+		Email: &email,
+	}
+
+	_, err := service.UpdateAdminProfile(context.Background(), uuid.New(), input)
+	if err == nil {
+		t.Error("expected error, got nil")
+	}
+}
+
+func TestUpdateAdminProfilePublicSlugExistsError(t *testing.T) {
+	mockRepo := &mocks.MockAdminRepository{
+		PublicSlugExistsError: errors.New("database error"),
+	}
+
+	service := createTestService(mockRepo)
+	slug := "jhonny-lima"
+
+	input := dtos.AdminProfileInput{
+		PublicSlug: &slug,
+	}
+
+	_, err := service.UpdateAdminProfile(context.Background(), uuid.New(), input)
+	if err == nil {
+		t.Error("expected error, got nil")
+	}
+}
+
+func TestUpdateAdminProfileRepositoryError(t *testing.T) {
+	mockRepo := &mocks.MockAdminRepository{
+		UpdateAdminProfileError: errors.New("database error"),
+	}
+
+	service := createTestService(mockRepo)
+	name := "Jhonny Lima"
+
+	input := dtos.AdminProfileInput{
+		FullName: &name,
+	}
+
+	_, err := service.UpdateAdminProfile(context.Background(), uuid.New(), input)
+	if err == nil {
+		t.Error("expected error, got nil")
+	}
+}
+
+func TestUpdateAdminProfileGetProfileError(t *testing.T) {
+	mockRepo := &mocks.MockAdminRepository{
+		GetAdminProfileError: errors.New("database error"),
+	}
+
+	service := createTestService(mockRepo)
+	name := "Jhonny Lima"
+
+	input := dtos.AdminProfileInput{
+		FullName: &name,
+	}
+
+	_, err := service.UpdateAdminProfile(context.Background(), uuid.New(), input)
+	if err == nil {
+		t.Error("expected error, got nil")
+	}
+}

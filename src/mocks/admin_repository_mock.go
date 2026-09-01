@@ -62,6 +62,14 @@ type MockAdminRepository struct{
 
 	GetAdminProfileError error
 	GetAdminProfileOutput dtos.AdminProfileOutput
+
+	EmailExistsResult bool
+	EmailExistsError error
+
+	PublicSlugExistsResult bool
+	PublicSlugExistsError error
+
+	UpdateAdminProfileError error
 }
 
 var _ services.AdminRepository = (*MockAdminRepository)(nil)
@@ -97,12 +105,8 @@ func (m *MockAdminRepository) DeletePatient(ctx context.Context, patientID uuid.
 	return m.DeletePatientError
 }
 
-func (m *MockAdminRepository) EmailExists(
-	ctx context.Context,
-	email string,
-	adminID uuid.UUID,
-) (bool, error) {
-	return false, nil
+func (m *MockAdminRepository) EmailExists(ctx context.Context, email string, adminID uuid.UUID) (bool, error) {
+	return m.EmailExistsResult, m.EmailExistsError
 }
 
 func (m *MockAdminRepository) FindAdminIDBySlug(
@@ -147,20 +151,12 @@ func (m *MockAdminRepository) GetPatients(ctx context.Context, adminID uuid.UUID
 	return m.GetPatientsPatients, m.GetPatientsTotal, m.GetPatientsError
 }
 
-func (m *MockAdminRepository) PublicSlugExists(
-	ctx context.Context,
-	slug string,
-	adminID uuid.UUID,
-) (bool, error) {
-	return false, nil
+func (m *MockAdminRepository) PublicSlugExists(ctx context.Context, slug string, adminID uuid.UUID) (bool, error) {
+	return m.PublicSlugExistsResult, m.PublicSlugExistsError
 }
 
-func (m *MockAdminRepository) UpdateAdminProfile(
-	ctx context.Context,
-	adminID uuid.UUID,
-	input dtos.AdminProfileInput,
-) error {
-	return nil
+func (m *MockAdminRepository) UpdateAdminProfile(ctx context.Context, adminID uuid.UUID, input dtos.AdminProfileInput) error {
+	return m.UpdateAdminProfileError
 }
 
 func (m *MockAdminRepository) UpdateAppointment(ctx context.Context, appointmentID, adminID uuid.UUID, date, startTime, endTime time.Time) error {
