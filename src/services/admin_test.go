@@ -692,3 +692,65 @@ func TestUpdateCalendarSlotGetUpdateSlotsError(t *testing.T) {
 		t.Error("expected error, got nil")
 	}
 }
+
+func TestGetAvailableSlots(t *testing.T) {
+	mockRepo := &mocks.MockAdminRepository{
+		GetCalendarSlotsByWeekdaySlots: []dtos.CalendarSlotDB{
+			createValidCalendarSlot(),
+		},
+		GetAppointmentsByDateAppointments: []dtos.AppointmentOutput{
+			{
+				StartTime: "10:00",
+			},
+		},
+	}
+
+	service := createTestService(mockRepo)
+
+	slots, err := service.GetAvaliableSlots(context.Background(), uuid.New(), "2026-08-28")
+	if err != nil {
+		t.Errorf("expected no error, got %v", err)
+	}
+
+	for _, slot := range slots {
+		if slot == "10:00" {
+			t.Error("expected 10:00 to be umavailable")
+		}
+	}
+}
+
+func TestGetAvailableSlotsGetCalendarSlotsError(t *testing.T) {
+	mockRepo := &mocks.MockAdminRepository{
+		GetCalendarSlotsByWeekdayError: errors.New("database error"),
+	}
+
+	service := createTestService(mockRepo)
+
+	_, err := service.GetAvaliableSlots(context.Background(), uuid.New(), "2026-08-28")
+	if err == nil {
+		t.Error("expected error, got nil")
+	}
+}
+
+func TestGetAvailableSlotsGetAppointmentsError(t *testing.T) {
+	mockRepo := &mocks.MockAdminRepository{
+		GetAppointmentsByDateError: errors.New("database error"),
+	}
+
+	service := createTestService(mockRepo)
+
+	_, err := service.GetAvaliableSlots(context.Background(), uuid.New(), "2028-08-28")
+	if err == nil {
+		t.Error("expected error, got nil")
+	}
+}
+
+func TestGetAvailableSlotsInvalidDate(t *testing.T) {
+	mockRepo := &mocks.MockAdminRepository{}
+	service := createTestService(mockRepo)
+
+	_, err := service.GetAvaliableSlots(context.Background(), uuid.New(), "data-invalida")
+	if err == nil {
+		t.Error("expected error, got nil")
+	}
+}
