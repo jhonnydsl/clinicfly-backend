@@ -89,6 +89,21 @@ func createTestAdminToken(t *testing.T) string {
 	return token
 }
 
+func postCalendarSlot(t *testing.T, router *gin.Engine, token, body string) *httptest.ResponseRecorder {
+	t.Helper()
+
+	req := httptest.NewRequest(http.MethodPost, "/api/v1/admin/calendar-slots", strings.NewReader(body))
+
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", "Bearer "+token)
+
+	rec := httptest.NewRecorder()
+
+	router.ServeHTTP(rec, req)
+
+	return rec
+}
+
 func TestCreateCalendarSlotIntegration(t *testing.T) {
 	token := createTestAdminToken(t)
 
@@ -100,14 +115,7 @@ func TestCreateCalendarSlotIntegration(t *testing.T) {
 		"end_time": "09:00"
 	}`
 
-	req := httptest.NewRequest(http.MethodPost, "/api/v1/admin/calendar-slots", strings.NewReader(body))
-
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Authorization", "Bearer "+token)
-
-	rec := httptest.NewRecorder()
-
-	router.ServeHTTP(rec, req)
+	rec := postCalendarSlot(t, router, token, body)
 
 	if rec.Code != http.StatusCreated {
 		t.Fatalf("expected status 201, got %d: %s", rec.Code, rec.Body.String())
@@ -149,4 +157,34 @@ func TestCreateCalendarSlotIntegration(t *testing.T) {
 	 }
 
 	 t.Logf("slot confirmed in database: weekday=%d, start=%s, end=%s", weekday, startTime.Format("15:04"), endTime.Format("15:04"))
+}
+
+func TestCreateCalendarSlotOverlapIntegration(t *testing.T) {
+	token := createTestAdminToken(t)
+
+	router := setupRouter()
+
+	firstBody := `{
+		"weekday": 1,
+		"start_time": "08:00",
+		"end_time": "09:00"
+	}`
+
+	rec := postCalendarSlot(t, router, token, firstBody)
+
+	if rec.Code != http.StatusCreated {
+		t.Fatalf("expected first slot creation to return 201, got %d: %s", rec.Code, rec.Body.String())
+	}
+
+	secondeBody := `{
+		"weekday": 1,
+		"start_time": "08:30",
+		"end_time": "09:30"
+	}`
+
+	rec = postCalendarSlot(t, router, token, secondeBody)
+
+	if rec.Code != http.StatusBadRequest {
+		t.Fatalf("expected overlapping slot creation to return 400, got %d: %s", rec.Code, rec.Body.String())
+	}
 }
