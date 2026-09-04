@@ -92,8 +92,14 @@ func (service *AdminService) CreateAppointment(ctx context.Context, input dtos.A
 
 	validSlot := false
 
+	startMinutes := start.Hour()*60 + start.Minute()
+	endMinutes := end.Hour()*60 + end.Minute()
+
 	for _, slot := range slots {
-		if !start.Before(slot.StartTime) && !end.After(slot.EndTime) {
+		slotStartMinutes := slot.StartTime.Hour()*60 + slot.StartTime.Minute()
+		slotEndMinutes := slot.EndTime.Hour()*60 + slot.EndTime.Minute()
+
+		if startMinutes >= slotStartMinutes && endMinutes <= slotEndMinutes {
 			validSlot = true
 			break
 		}
