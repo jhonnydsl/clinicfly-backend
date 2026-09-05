@@ -68,6 +68,17 @@ func createTestCalendarSlot(t *testing.T, adminID uuid.UUID, weekday int, start,
 	}
 }
 
+func createTestPatientToken(t *testing.T, patientID uuid.UUID) string {
+	t.Helper()
+
+	token, err := utils.GenerateJWT(patientID.String(), "Patient Test", "patient@test.com", "patient")
+	if err != nil {
+		t.Fatalf("error generating patient token: %v", err)
+	}
+
+	return token
+}
+
 func TestCreatePatientIntegration(t *testing.T) {
 	adminID, _, adminSlug := createTestAdmin(t)
 
@@ -252,4 +263,182 @@ func TestGetDoctorAvailableSlotsWithAppointmentIntegration(t *testing.T) {
 	}
 
 	t.Logf("occupied slot correctly removed: %v", slots)
+}
+
+func TestCancelAppointmentByPatientIntegration(t *testing.T) {
+	adminID, _, adminSlug := createTestAdmin(t)
+
+	patientID := createTestPatient(t, adminSlug)
+
+	createTestCalendarSlot(t, adminID, 1, "08:00", "10:00")
+
+	repo := &repository.AdminRepository{}
+
+	appointmentInput := dtos.AppointmentInput{
+		PatientID: patientID.String(),
+		Date: "2026-09-07",
+		StartTime: "08:00",
+		EndTime: "09:00",
+	}
+
+	parsedDate, err := utils.ParseDate(appointmentInput.Date)
+	if err != nil {
+		t.Fatalf("failed to parse appointment date: %v", err)
+	}
+
+	appointmentStart, err := utils.ParseDateTime(
+		appointmentInput.Date,
+		appointmentInput.StartTime,
+	)
+	if err != nil {
+		t.Fatalf("failed to parse appointment start: %v", err)
+	}
+
+	appointmentEnd, err := utils.ParseDateTime(
+		appointmentInput.Date,
+		appointmentInput.EndTime,
+	)
+	if err != nil {
+		t.Fatalf("failed to parse appointment end: %v", err)
+	}
+
+	appointmentID, err := repo.CreateAppointment(
+		context.Background(),
+		appointmentInput,
+		parsedDate,
+		appointmentStart,
+		appointmentEnd,
+		adminID,
+	)
+	if err != nil {
+		t.Fatalf("failed to create test appointment: %v", err)
+	}
+
+	token := createTestPatientToken(t, patientID)
+
+	router := setupPatientRouter()
+
+	req := httptest.NewRequest(
+		http.MethodPatch,
+		fmt.Sprintf("/api/v1/patient/appointments/%s/cancel", appointmentID),
+		nil,
+	)
+
+	req.Header.Set("Authorization", "Bearer "+token)
+
+	rec := httptest.NewRecorder()
+
+	router.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("expected status 200, got %d: %s", rec.Code, rec.Body.String())
+	}
+
+	var status string
+
+	err = repository.DB.QueryRow(`
+		SELECT status
+		FROM appointments
+		WHERE id = $1
+	`, appointmentID).Scan(&status)
+
+	if err != nil {
+		t.Fatalf("failed to query cancelled appointment: %v", err)
+	}
+
+	if status != "cancelled" {
+		t.Fatalf("expected appointment status cancelled, got %s", status)
+	}
+
+	t.Logf("appointment %s sucessfully cancelled by patient", appointmentID)
+}
+
+func TestCancelAppointmentByAnotherPatientIntegration(t *testing.T) {
+	adminID, _, adminSlug := createTestAdmin(t)
+
+	patientAID := createTestPatient(t, adminSlug)
+	patientBID := createTestPatient(t, adminSlug)
+
+	createTestCalendarSlot(t, adminID, 1, "08:00", "10:00")
+
+	repo := &repository.AdminRepository{}
+
+	appointmentInput := dtos.AppointmentInput{
+		PatientID: patientBID.String(),
+		Date:      "2026-09-07",
+		StartTime: "08:00",
+		EndTime:   "09:00",
+	}
+
+	parsedDate, err := utils.ParseDate(appointmentInput.Date)
+	if err != nil {
+		t.Fatalf("failed to parse appointment date: %v", err)
+	}
+
+	appointmentStart, err := utils.ParseDateTime(
+		appointmentInput.Date,
+		appointmentInput.StartTime,
+	)
+	if err != nil {
+		t.Fatalf("failed to parse appointment start: %v", err)
+	}
+
+	appointmentEnd, err := utils.ParseDateTime(
+		appointmentInput.Date,
+		appointmentInput.EndTime,
+	)
+	if err != nil {
+		t.Fatalf("failed to parse appointment end: %v", err)
+	}
+
+	appointmentID, err := repo.CreateAppointment(
+		context.Background(),
+		appointmentInput,
+		parsedDate,
+		appointmentStart,
+		appointmentEnd,
+		adminID,
+	)
+	if err != nil {
+		t.Fatalf("failed to create test appointment: %v", err)
+	}
+
+	token := createTestPatientToken(t, patientAID)
+
+	router := setupPatientRouter()
+
+
+	req := httptest.NewRequest(
+		http.MethodGet,
+		fmt.Sprintf("/api/v1/patient/appointments/%s/cancel", appointmentID),
+		nil,
+	)
+
+	req.Header.Set("Authorization", "Bearer "+token)
+
+	rec := httptest.NewRecorder()
+
+	router.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusNotFound {
+		t.Fatalf("expected status 404, got %d: %s", rec.Code, rec.Body.String())
+	}
+
+	var status string
+
+	err = repository.DB.QueryRow(`
+		SELECT status
+		FROM appointments
+		WHERE id = $1
+	`, appointmentID).Scan(&status)
+
+	if err != nil {
+		t.Fatalf("failed to query appointment: %v", err)
+	}
+
+	if status != "scheduled" {
+		t.Fatalf("expected appointment to remain scheduled, got %s", status)
+	}
+
+	t.Logf("patient %s could not cancel appointment belonging to patient %s", patientAID, patientBID)
 }
