@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	auditservices "github.com/jhonnydsl/clinify-backend/src/audit/services"
 	"github.com/jhonnydsl/clinify-backend/src/dtos"
 	"github.com/jhonnydsl/clinify-backend/src/mailer"
 	"github.com/jhonnydsl/clinify-backend/src/repository"
@@ -15,6 +16,23 @@ type PatientService struct {
 	Repo *repository.PatientRepository
 	AdminRepo *repository.AdminRepository
 	Mailer *mailer.Mailer
+	AuditService *auditservices.AuditService
+}
+
+func (service *PatientService) AuditAppointmentCancellationPatient(ctx context.Context, actorID, appointmentID uuid.UUID, actorRole, ipAddress, userAgent string) {
+	err := service.AuditService.CreateAuditLog(ctx, dtos.AuditLogInput{
+        ActorID:      &actorID,
+        ActorRole:    &actorRole,
+        Action:       "appointment.cancelled",
+        ResourceType: "appointment",
+        ResourceID:   &appointmentID,
+        IPAddress:    ipAddress,
+        UserAgent:    userAgent,
+    })
+
+    if err != nil {
+        utils.LogError("cancelAppointmentByPatient service (audit log error)", err)
+    }
 }
 
 func (service *PatientService) CreatePatient(ctx context.Context, patient dtos.PatientInput) (uuid.UUID, error) {
@@ -122,7 +140,7 @@ func (service *PatientService) GetDoctorAvaliableSlots(ctx context.Context, admi
 	return available, nil
 }
 
-func (service *PatientService) CancelAppointmentByPatient(ctx context.Context, appointmentID, patientID uuid.UUID) error {
+func (service *PatientService) CancelAppointmentByPatient(ctx context.Context, appointmentID, patientID, actorID uuid.UUID, actorRole, ipAddress, userAgent string) error {
 	appointment, err := service.Repo.GetAppointmentByID(ctx, appointmentID, patientID)
 	if err != nil {
 		utils.LogError("cancelAppointmentByPatient service (error getting appointment)", err)
@@ -134,6 +152,8 @@ func (service *PatientService) CancelAppointmentByPatient(ctx context.Context, a
 		utils.LogError("cancelAppointmentByPatient service (error cancelling appointment)", err)
 		return err
 	}
+
+	service.AuditAppointmentCancellationPatient(ctx, actorID, appointmentID, actorRole, ipAddress, userAgent)
 	
 	body := utils.BuildAppointmentCancellationEmailBody(
 		appointment.Date,

@@ -16,6 +16,9 @@ func SetupPatientRoutes(app *gin.RouterGroup, mailer *mailer.Mailer) {
 		Repo: &repository.PatientRepository{},
 		AdminRepo: &repository.AdminRepository{},
 		Mailer: mailer,
+		AuditService: &auditservices.AuditService{
+			Repo: &auditrepository.AuditRepository{},
+		},
 	}
 	adminService := &services.AdminService{
 		Repo: &repository.AdminRepository{},

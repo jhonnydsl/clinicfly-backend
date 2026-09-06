@@ -345,7 +345,7 @@ func (controller *AdminController) CancelAppointmentByAdmin(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid appointment id"})
 		return
 	}
-	err = controller.Service.CancelAppointmentByAdmin(ctx, appointmentID, adminID)
+	err = controller.Service.CancelAppointmentByAdmin(ctx, appointmentID, adminID, adminID, "admin", c.ClientIP(), c.GetHeader("User-Agent"))
 	if err != nil {
 		c.JSON(utils.GetStatusCode(err), gin.H{"error": err.Error()})
 		return

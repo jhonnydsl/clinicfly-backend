@@ -38,6 +38,22 @@ func (service *AdminService) AuditAppointmentCreation(ctx context.Context, actor
     }
 }
 
+func (service *AdminService) AuditAppointmentCancellation(ctx context.Context, actorID, appointmentID uuid.UUID, actorRole, ipAddress, userAgent string) {
+	err := service.AuditService.CreateAuditLog(ctx, dtos.AuditLogInput{
+        ActorID:      &actorID,
+        ActorRole:    &actorRole,
+        Action:       "appointment.cancelled",
+        ResourceType: "appointment",
+        ResourceID:   &appointmentID,
+        IPAddress:    ipAddress,
+        UserAgent:    userAgent,
+    })
+
+    if err != nil {
+        utils.LogError("cancelAppointmentByAdmin service (audit log error)", err)
+    }
+}
+
 func (services *AdminService) CreateAdmin(ctx context.Context, admin dtos.AdminInput) (uuid.UUID, error) {
 	if err := utils.ValidateAdminInput(admin); err != nil {
 		utils.LogError("CreatingAdmin service (error validating admin input)", err)
@@ -428,7 +444,7 @@ func (service *AdminService) GetAvaliableSlots(ctx context.Context, adminID uuid
 	return available, nil
 }
 
-func (service *AdminService) CancelAppointmentByAdmin(ctx context.Context, appointmentID, adminID uuid.UUID) error {
+func (service *AdminService) CancelAppointmentByAdmin(ctx context.Context, appointmentID, adminID, actorID uuid.UUID, actorRole, ipAddress, userAgent string) error {
 	appointment, err := service.Repo.GetAllAppointmentByID(ctx, appointmentID, adminID)
 	if err != nil {
 		utils.LogError("cancelAppointmentByAdmin service (error getting appointment)", err)
@@ -440,6 +456,8 @@ func (service *AdminService) CancelAppointmentByAdmin(ctx context.Context, appoi
 		utils.LogError("cancelAppointmentByAdmin service (error cancelling appointment)", err)
 		return err
 	}
+
+	service.AuditAppointmentCancellation(ctx, actorID, appointmentID, actorRole, ipAddress, userAgent)
 
 	body := utils.BuildAppointmentCancellationEmailBody(
 		appointment.Date,

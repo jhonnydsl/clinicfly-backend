@@ -777,7 +777,7 @@ func TestCancelAppointmentByAdminGetAppointmentError(t *testing.T) {
 
 	service := createTestService(mockRepo)
 
-	err := service.CancelAppointmentByAdmin(context.Background(), uuid.New(), uuid.New())
+	err := service.CancelAppointmentByAdmin(context.Background(), uuid.New(), uuid.New(), uuid.New(), "admin", "127.0.0.1", "test-agent")
 	if err == nil {
 		t.Error("expected error, got nil")
 	}
@@ -790,7 +790,7 @@ func TestCancelAppointmentByAdminCancelError(t *testing.T) {
 
 	service := createTestService(mockRepo)
 
-	err := service.CancelAppointmentByAdmin(context.Background(), uuid.New(), uuid.New())
+	err := service.CancelAppointmentByAdmin(context.Background(), uuid.New(), uuid.New(), uuid.New(), "admin", "127.0.0.1", "test-agent")
 	if err == nil {
 		t.Error("expected error, got nil")
 	}

@@ -162,7 +162,7 @@ func (controller *PatientController) CancelAppointmentByPatient(c *gin.Context) 
 		return
 	}
 
-	err = controller.Service.CancelAppointmentByPatient(ctx, appointmentID, patientID)
+	err = controller.Service.CancelAppointmentByPatient(ctx, appointmentID, patientID, patientID, "patient", c.ClientIP(), c.GetHeader("User-Agent"))
 	if err != nil {
 		c.JSON(utils.GetStatusCode(err), gin.H{"error": err.Error()})
 		return
