@@ -25,7 +25,7 @@ func (controller *LoginController) LoginUser(c *gin.Context) {
 	ctx, cancel := utils.NewDBContext()
 	defer cancel()
 
-	login, err := controller.Service.LoginUser(ctx, loginInput.Email, loginInput.Password)
+	login, err := controller.Service.LoginUser(ctx, loginInput.Email, loginInput.Password, c.ClientIP(), c.GetHeader("User-Agent"))
 	if err != nil {
 		c.JSON(utils.GetStatusCode(err), gin.H{"error": err.Error()})
 		return

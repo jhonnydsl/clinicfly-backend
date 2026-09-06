@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"database/sql"
 
 	"github.com/jhonnydsl/clinify-backend/src/dtos"
 	"github.com/jhonnydsl/clinify-backend/src/utils"
@@ -21,6 +22,10 @@ func (r *LoginRepository) GetAdminByEmail(ctx context.Context, email string) (dt
 		&admin.PasswordHash,
 	)
 	if err != nil {
+		if err == sql.ErrNoRows {
+			return dtos.LoginAdmin{}, err
+		}
+
 		utils.LogError("getAdminByEmail repository (error select data in db)", err)
 		return dtos.LoginAdmin{}, utils.InternalServerError("error logging in")
 	}
@@ -40,6 +45,9 @@ func (r *LoginRepository) GetPatientByEmail(ctx context.Context, email string) (
 		&patient.PasswordHash,
 	)
 	if err != nil {
+		if err == sql.ErrNoRows {
+			return dtos.LoginPatient{}, err
+		}
 		utils.LogError("getPatientByEmail repository (error select data in db)", err)
 		return dtos.LoginPatient{}, utils.InternalServerError("error logging in")
 	}
