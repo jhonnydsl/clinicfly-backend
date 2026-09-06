@@ -114,7 +114,19 @@ func (controller *PatientController) CreateAppointment(c *gin.Context) {
 		return
 	}
 
-	id, err := controller.AdminService.CreateAppointment(ctx, input, adminID)
+	patientIDValue, exists := c.Get("id")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "patient id not found in context"})
+		return
+	}
+
+	patientID, err := uuid.Parse(patientIDValue.(string))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid patient id"})
+		return
+	}
+
+	id, err := controller.AdminService.CreateAppointment(ctx, input, adminID, patientID, "patient", c.ClientIP(), c.GetHeader("User-Agent"))
 	if err != nil {
 		c.JSON(utils.GetStatusCode(err), gin.H{"error": err.Error()})
 		return

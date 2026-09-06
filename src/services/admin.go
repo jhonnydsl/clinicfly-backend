@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	auditservices "github.com/jhonnydsl/clinify-backend/src/audit/services"
 	"github.com/jhonnydsl/clinify-backend/src/dtos"
 	"github.com/jhonnydsl/clinify-backend/src/utils"
 	"github.com/patrickmn/go-cache"
@@ -18,6 +19,23 @@ type Mailer interface {
 type AdminService struct {
 	Repo AdminRepository
 	Mailer Mailer
+	AuditService *auditservices.AuditService
+}
+
+func (service *AdminService) AuditAppointmentCreation(ctx context.Context, actorID, appointmentID uuid.UUID, actorRole, ipAddress, userAgent string) {
+	err := service.AuditService.CreateAuditLog(ctx, dtos.AuditLogInput{
+        ActorID:      &actorID,
+        ActorRole:    &actorRole,
+        Action:       "appointment.created",
+        ResourceType: "appointment",
+        ResourceID:   &appointmentID,
+        IPAddress:    ipAddress,
+        UserAgent:    userAgent,
+    })
+
+    if err != nil {
+        utils.LogError("createAppointment service (audit log error)", err)
+    }
 }
 
 func (services *AdminService) CreateAdmin(ctx context.Context, admin dtos.AdminInput) (uuid.UUID, error) {
@@ -49,7 +67,7 @@ func (services *AdminService) CreateAdmin(ctx context.Context, admin dtos.AdminI
 	return id, nil
 }
 
-func (service *AdminService) CreateAppointment(ctx context.Context, input dtos.AppointmentInput, clientID uuid.UUID) (uuid.UUID, error) {
+func (service *AdminService) CreateAppointment(ctx context.Context, input dtos.AppointmentInput, clientID, actorID uuid.UUID, actorRole, ipAddress, userAgent string) (uuid.UUID, error) {
 	parsedDate, err := utils.ParseDate(input.Date)
 	if err != nil {
 		utils.LogError("createAppointment service (error to parse date)", err)
@@ -138,6 +156,8 @@ func (service *AdminService) CreateAppointment(ctx context.Context, input dtos.A
 		utils.LogError("createAppointment service (error call to createAppointment repository)", err)
 		return uuid.UUID{}, utils.InternalServerError("error creating appointment")
 	}
+
+	service.AuditAppointmentCreation(ctx, actorID, id, actorRole, ipAddress, userAgent)
 
 	patientUUID, err := uuid.Parse(input.PatientID)
 	if err != nil {

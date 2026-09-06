@@ -64,7 +64,7 @@ func (controller *AdminController) CreateAppointment(c *gin.Context) {
 		return
 	}
 
-	id, err := controller.Service.CreateAppointment(ctx, input, clientID)
+	id, err := controller.Service.CreateAppointment(ctx, input, clientID, clientID, "admin", c.ClientIP(), c.GetHeader("User-Agent"))
 	if err != nil {
 		c.JSON(utils.GetStatusCode(err), gin.H{"error": err.Error()})
 		return

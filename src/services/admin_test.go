@@ -173,7 +173,7 @@ func TestCreateAppointmentInvalidTimeRange(t *testing.T) {
 	input.StartTime = "14:00"
 	input.EndTime = "13:00"
 
-	_, err := service.CreateAppointment(context.Background(), input, uuid.New())
+	_, err := service.CreateAppointment(context.Background(), input, uuid.New(), uuid.New(), "admin", "127.0.0.1", "test-agent")
 	if err == nil {
 		t.Error("expected error, got nil")
 	}
@@ -188,7 +188,7 @@ func TestCreateAppointmentGetCalendarSlotsError(t *testing.T) {
 
 	input := createValidAppointmentInput()
 
-	_, err := service.CreateAppointment(context.Background(), input, uuid.New())
+	_, err := service.CreateAppointment(context.Background(), input, uuid.New(), uuid.New(), "admin", "127.0.0.1", "test-agent")
 	if err == nil {
 		t.Error("expected error, got nil")
 	}
@@ -206,7 +206,7 @@ func TestCreateAppointmentOutsideAvailability(t *testing.T) {
 	input.StartTime = "19:00"
 	input.EndTime = "20:00"
 
-	_, err := service.CreateAppointment(context.Background(), input, uuid.New())
+	_, err := service.CreateAppointment(context.Background(), input, uuid.New(), uuid.New(), "admin", "127.0.0.1", "test-agent")
 
 	if err == nil {
 		t.Error("expected error, got nil")
@@ -237,7 +237,7 @@ func TestCreateAppointmentsAlreadyBooked(t *testing.T) {
 	input.StartTime = "13:00"
 	input.EndTime = "14:00"
 
-	_, err := service.CreateAppointment(context.Background(), input, uuid.New())
+	_, err := service.CreateAppointment(context.Background(), input, uuid.New(), uuid.New(), "admin", "127.0.0.1", "test-agent")
 	if err == nil {
 		t.Error("expected error, got nil")
 	}
@@ -255,7 +255,7 @@ func TestCreateAppointmentsGetAppointmentsByDateError(t *testing.T) {
 
 	input := createValidAppointmentInput()
 
-	_, err := service.CreateAppointment(context.Background(), input, uuid.New())
+	_, err := service.CreateAppointment(context.Background(), input, uuid.New(), uuid.New(), "admin", "127.0.0.1", "test-agent")
 	if err == nil {
 		t.Error("expected error, got nil")
 	}
@@ -273,7 +273,7 @@ func TestCreateAppointmentRepositoryError(t *testing.T) {
 
 	input := createValidAppointmentInput()
 
-	_, err := service.CreateAppointment(context.Background(), input, uuid.New())
+	_, err := service.CreateAppointment(context.Background(), input, uuid.New(), uuid.New(), "admin", "127.0.0.1", "test-agent")
 	if err == nil {
 		t.Error("expected error, got nil")
 	}
@@ -291,7 +291,7 @@ func TestCreateAppointmentInvalidPatientID(t *testing.T) {
 	input := createValidAppointmentInput()
 	input.PatientID = "paciente-invalido"
 
-	_, err := service.CreateAppointment(context.Background(), input, uuid.New())
+	_, err := service.CreateAppointment(context.Background(), input, uuid.New(), uuid.New(), "admin", "127.0.0.1", "test-agent")
 	if err == nil {
 		t.Error("expected error, got nil")
 	}
@@ -310,7 +310,7 @@ func TestCreateAppointmentGetPatientEmailError(t *testing.T) {
 
 	input := createValidAppointmentInput()
 
-	_, err := service.CreateAppointment(context.Background(), input, uuid.New())
+	_, err := service.CreateAppointment(context.Background(), input, uuid.New(), uuid.New(), "admin", "127.0.0.1", "test-agent")
 	if err == nil {
 		t.Error("expected error, got nil")
 	}
@@ -330,7 +330,7 @@ func TestCreateAppointmentSuccess(t *testing.T) {
 	service := createTestService(mockRepo)
 	input := createValidAppointmentInput()
 
-	id, err := service.CreateAppointment(context.Background(), input, uuid.New())
+	id, err := service.CreateAppointment(context.Background(), input, uuid.New(), uuid.New(), "admin", "127.0.0.1", "test-agent")
 	if err != nil {
 		t.Errorf("expected no error, got %v", err)
 	}
