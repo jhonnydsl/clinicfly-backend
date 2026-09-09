@@ -806,7 +806,7 @@ func TestUpdateAppointmentInvalidDate(t *testing.T) {
 		EndTime: "11:00",
 	}
 
-	err := service.UpdateAppointment(context.Background(), uuid.New(), uuid.New(), input)
+	err := service.UpdateAppointment(context.Background(), uuid.New(), uuid.New(), uuid.New(), "admin", "127.0.0.1", "test-agent", input)
 	if err == nil {
 		t.Error("expected error, got nil")
 	}
@@ -832,7 +832,7 @@ func TestUpdateAppointmentOutsideAvailability(t *testing.T) {
 		EndTime: "20:00",
 	}
 
-	err := service.UpdateAppointment(context.Background(), appointmentID, uuid.New(), input)
+	err := service.UpdateAppointment(context.Background(), appointmentID, uuid.New(), uuid.New(), "admin", "127.0.0.1", "test-agent", input)
 	if err == nil {
 		t.Error("expected error, got nil")
 	}
@@ -874,7 +874,7 @@ func TestUpdateAppointmentOccupiedTime(t *testing.T) {
 		EndTime:   "11:30",
 	}
 
-	err := service.UpdateAppointment(context.Background(), appointmentID, uuid.New(), input)
+	err := service.UpdateAppointment(context.Background(), appointmentID, uuid.New(), uuid.New(), "admin", "127.0.0.1", "test-agent", input)
 	if err == nil {
 		t.Error("expected error, got nil")
 	}
@@ -901,7 +901,7 @@ func TestUpdateAppointmentUpdateError(t *testing.T) {
 		EndTime:   "11:00",
 	}
 
-	err := service.UpdateAppointment(context.Background(), appointmentID, uuid.New(), input)
+	err := service.UpdateAppointment(context.Background(), appointmentID, uuid.New(), uuid.New(), "admin", "127.0.0.1", "test-agent", input)
 	if err == nil {
 		t.Error("expected error, got nil")
 	}
@@ -928,7 +928,7 @@ func TestUpdateAppointmentGetAppointmentsError(t *testing.T){
 		EndTime:   "11:00",
 	}
 
-	err := service.UpdateAppointment(context.Background(), appointmentID, uuid.New(), input)
+	err := service.UpdateAppointment(context.Background(), appointmentID, uuid.New(), uuid.New(), "admin", "127.0.0.1", "test-agent", input)
 	if err == nil {
 		t.Error("expected error, got nil")
 	}

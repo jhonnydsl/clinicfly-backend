@@ -54,6 +54,22 @@ func (service *AdminService) AuditAppointmentCancellation(ctx context.Context, a
     }
 }
 
+func (service *AdminService) AuditAppointmentUpdate(ctx context.Context, actorID, appointmentID uuid.UUID, actorRole, ipAddress, userAgent string) {
+	err := service.AuditService.CreateAuditLog(ctx, dtos.AuditLogInput{
+		ActorID:      &actorID,
+        ActorRole:    &actorRole,
+        Action:       "appointment.updated",
+        ResourceType: "appointment",
+        ResourceID:   &appointmentID,
+        IPAddress:    ipAddress,
+        UserAgent:    userAgent,
+	})
+
+	if err != nil {
+		utils.LogError("updateAppointment service (audit log error)", err)
+	}
+}
+
 func (services *AdminService) CreateAdmin(ctx context.Context, admin dtos.AdminInput) (uuid.UUID, error) {
 	if err := utils.ValidateAdminInput(admin); err != nil {
 		utils.LogError("CreatingAdmin service (error validating admin input)", err)
@@ -486,7 +502,7 @@ func (service *AdminService) CancelAppointmentByAdmin(ctx context.Context, appoi
 	return nil
 }
 
-func (service *AdminService) UpdateAppointment(ctx context.Context, appointmentID, adminID uuid.UUID, input dtos.AppointmentUpdateInput) error {
+func (service *AdminService) UpdateAppointment(ctx context.Context, appointmentID, adminID, actorID uuid.UUID, actorRole, ipAddress, userAgent string, input dtos.AppointmentUpdateInput) error {
 	parsedDate, err := utils.ParseDate(input.Date)
 	if err != nil {
 		utils.LogError("updateAppointment service (error parsing date)", err)
@@ -569,6 +585,8 @@ func (service *AdminService) UpdateAppointment(ctx context.Context, appointmentI
 		utils.LogError("updateAppointment service (error updating appointment)", err)
 		return err
 	}
+
+	service.AuditAppointmentUpdate(ctx, actorID, appointmentID, actorRole, ipAddress, userAgent)
 
 	body := utils.BuildAppointmentUpdateEmailBody(
 		appointment.Date,

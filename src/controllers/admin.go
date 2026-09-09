@@ -391,7 +391,7 @@ func (controller *AdminController) UpdateAppointment(c *gin.Context) {
 		return
 	}
 
-	err = controller.Service.UpdateAppointment(ctx, appointmentID, adminID, input)
+	err = controller.Service.UpdateAppointment(ctx, appointmentID, adminID, adminID, "admin", c.ClientIP(), c.GetHeader("User-Agent"), input)
 	if err != nil {
 		c.JSON(utils.GetStatusCode(err), gin.H{"error": err.Error()})
 		return
