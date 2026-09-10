@@ -275,6 +275,42 @@ func (service *AdminService) GetPatients(ctx context.Context, adminID uuid.UUID,
 	return patients, total, nil
 }
 
+func (service *AdminService) GetPatientAppointmentHistory(ctx context.Context, adminID, patientID uuid.UUID, page, limit int) ([]dtos.AppointmentOutput, int, error) {
+	if page < 1 {
+		page = 1
+	}
+
+	if limit < 1 {
+		limit = 10
+	}
+
+	cacheKey := fmt.Sprintf(
+		"appointment_history_admin_%s_patient_%s_page_%d_limit_%d",
+		adminID.String(),
+		patientID.String(),
+		page,
+		limit,
+	)
+
+	if cached, found := utils.Cache.Get(cacheKey); found {
+		cachedRes := cached.(*utils.AppointmentsCache)
+		return cachedRes.Data, cachedRes.Total, nil
+	}
+
+	appointments, total, err := service.Repo.GetPatientAppointmentHistory(ctx, adminID, patientID, page, limit)
+	if err != nil {
+		utils.LogError("getPatientAppointment service (error calling repository)", err)
+		return nil, 0, err
+	}
+
+	utils.Cache.Set(cacheKey, &utils.AppointmentsCache{
+		Data: appointments,
+		Total: total,
+	}, cache.DefaultExpiration)
+
+	return appointments, total, nil
+}
+
 func (service *AdminService) DeletePatient(ctx context.Context, patientID uuid.UUID) error {
 	if patientID == uuid.Nil {
 		return utils.BadRequestError("invalid patient id")

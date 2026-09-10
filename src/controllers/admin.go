@@ -171,6 +171,48 @@ func (controller *AdminController) DeletePatient(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "patient deleted successfully"})
 }
 
+func (controller *AdminController) GetPatientAppointmentHistory(c *gin.Context) {
+	ctx, cancel := utils.NewDBContext()
+	defer cancel()
+
+	patientID, err := uuid.Parse(c.Param("id"))
+	if err != nil {
+		c.JSON(400, gin.H{"error": "invalid patient id"})
+		return
+	}
+
+	clientIDValue, exists := c.Get("id")
+	if !exists {
+		c.JSON(401, gin.H{"error": "client id not found in context"})
+		return
+	}
+
+	clientID, err := uuid.Parse(clientIDValue.(string))
+	if err != nil {
+		c.JSON(400, gin.H{"error": "invalid client id"})
+		return
+	}
+
+	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
+	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "10"))
+
+	appointments, total, err := controller.Service.GetPatientAppointmentHistory(ctx, clientID, patientID, page, limit)
+	if err != nil {
+		c.JSON(utils.GetStatusCode(err), gin.H{"error": err.Error()})
+		return
+	}
+
+	totalPages := int(math.Ceil(float64(total) / float64(limit)))
+
+	c.JSON(http.StatusOK, gin.H{
+		"data": appointments,
+		"page": page,
+		"limit": limit,
+		"total": total,
+		"total_pages": totalPages,
+	})
+}
+
 func (controller *AdminController) CreateCalendarSlot(c *gin.Context) {
 	var input dtos.CalendarSlotsInput
 

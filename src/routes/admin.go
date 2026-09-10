@@ -36,6 +36,7 @@ func SetupAdminRoutes(app *gin.RouterGroup, mailer *mailer.Mailer) {
 		protectedAdmin.POST("/appointments", adminController.CreateAppointment)
 		protectedAdmin.GET("/patients", adminController.GetPatients)			// => rota correta com paginação GET /api/v1/admin/patients?page=1&limit=10
 		protectedAdmin.GET("/appointments", adminController.GetAppointments)	// => rota correta com paginação GET /api/v1/admin/appointments?page=1&limit=10
+		protectedAdmin.GET("/patients/:id/appointments/history", adminController.GetPatientAppointmentHistory)		// => rota correta com paginação GET /api/v1/admin/patients/:id/appointments/history?page=1&limit=10
 		protectedAdmin.DELETE("/patients/:id", adminController.DeletePatient)
 		protectedAdmin.POST("/calendar-slots", adminController.CreateCalendarSlot)
 		protectedAdmin.GET("/calendar-slots", adminController.GetCalendarSlots)

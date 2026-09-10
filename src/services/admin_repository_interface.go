@@ -50,6 +50,14 @@ type AdminRepository interface {
 		limit int,
 	) ([]dtos.PatientOutput, int, error)
 
+	GetPatientAppointmentHistory(
+		ctx context.Context,
+		adminID,
+		patientID uuid.UUID,
+		page,
+		limit int,
+	) ([]dtos.AppointmentOutput, int, error)
+
 	DeletePatient(
 		ctx context.Context,
 		patientID uuid.UUID,

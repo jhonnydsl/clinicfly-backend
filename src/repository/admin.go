@@ -276,6 +276,92 @@ func (r *AdminRepository) GetPatients(ctx context.Context, adminID uuid.UUID, pa
 	return patients, total, nil
 }
 
+func (r *AdminRepository) GetPatientAppointmentHistory(ctx context.Context, adminID, patientID uuid.UUID, page, limit int) ([]dtos.AppointmentOutput, int, error) {
+	query := `
+		SELECT
+			a.id,
+			a.patient_id,
+			a.title,
+			p.full_name,
+			a.date,
+			a.start_time,
+			a.end_time,
+			a.status
+		FROM appointments a
+		JOIN patients p ON p.id = a.patient_id
+		WHERE a.client_id = $1
+			AND a.patient_id = $2
+			AND a.status = 'completed'
+		ORDER BY a.date DESC, a.start_time DESC
+		LIMIT $3 OFFSET $4
+	`
+
+	offset := (page - 1) * limit
+
+	queryCount := `
+		SELECT COUNT(*)
+		FROM appointments
+		WHERE client_id = $1
+			AND patient_id = $2
+			AND status = 'completed'
+	`
+
+	var total int
+
+	err := DB.QueryRowContext(ctx, queryCount, adminID, patientID).Scan(&total)
+	if err != nil {
+		utils.LogError("getPatientAppointmentHistory repository (error getting total appointment history)", err)
+		return nil, 0, utils.InternalServerError("internal server error")
+	}
+
+	rows, err := DB.QueryContext(ctx, query, adminID, patientID, limit, offset)
+	if err != nil {
+		utils.LogError("getPatientAppointmentHistory repository (query error)", err)
+		return nil, 0, utils.InternalServerError("error getting appointment history")
+	}
+
+	defer rows.Close()
+
+	var appointments []dtos.AppointmentOutput
+
+	for rows.Next() {
+		var (
+			appointment dtos.AppointmentOutput
+			dateDB 		time.Time
+			startTime 	time.Time
+			endTime 	time.Time
+		)
+
+		err := rows.Scan(
+			&appointment.ID,
+			&appointment.PatientID,
+			&appointment.Title,
+			&appointment.FullName,
+			&dateDB,
+			&startTime,
+			&endTime,
+			&appointment.Status,
+		)
+		if err != nil {
+			utils.LogError("getPatientAppointmentHistory repository (scan error)", err)
+			return nil, 0, utils.InternalServerError("internal server error")
+		}
+
+		appointment.Date = dateDB.Format("2006-01-02")
+		appointment.StartTime = startTime.Format("15:04")
+		appointment.EndTime = endTime.Format("15:04")
+
+		appointments = append(appointments, appointment)
+	}
+
+	if err := rows.Err(); err != nil {
+		utils.LogError("getPatientAppointmentHistory repository (error reading appointment history)", err)
+		return nil, 0, utils.InternalServerError("internal server error")
+	}
+
+	return appointments, total, nil
+} 
+
 func (r *AdminRepository) DeletePatient(ctx context.Context, patientID uuid.UUID) error {
 	query := `DELETE FROM patients WHERE id = $1`
 

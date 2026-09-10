@@ -166,3 +166,9 @@ func (m *MockAdminRepository) UpdateAppointment(ctx context.Context, appointment
 func (m *MockAdminRepository) UpdateCalendarSlot(ctx context.Context, slotID, adminID uuid.UUID, input dtos.CalendarSlotsInput) error {
 	return m.UpdateCalendarSlotError
 }
+
+func (m *MockAdminRepository) GetPatientAppointmentHistory(
+	ctx context.Context,
+	adminID, patientID uuid.UUID,
+	page, limit int,
+) ([]dtos.AppointmentOutput, int, error)
