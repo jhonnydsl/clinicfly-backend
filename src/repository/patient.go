@@ -44,6 +44,7 @@ func (r *PatientRepository) GetAppointments(ctx context.Context, patientID uuid.
 		SELECT
 			a.id,
 			a.client_id,
+			a.title,
 			c.full_name,
 			a.date,
 			a.start_time,
@@ -76,6 +77,7 @@ func (r *PatientRepository) GetAppointments(ctx context.Context, patientID uuid.
 		err := rows.Scan(
 			&appointment.ID,
 			&appointment.AdminID,
+			&appointment.Title,
 			&appointment.FullName,
 			&dateDB,
 			&startTime,

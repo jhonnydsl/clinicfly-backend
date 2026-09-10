@@ -4,6 +4,7 @@ import "github.com/google/uuid"
 
 type AppointmentInput struct {
 	PatientID string `json:"patient_id" binding:"required"`
+	Title 	  string `json:"title" binding:"required"`
 	Date      string `json:"date" binding:"required"`
 	StartTime string `json:"start_time" binding:"required"`
 	EndTime   string `json:"end_time" binding:"required"`
@@ -12,6 +13,7 @@ type AppointmentInput struct {
 type AppointmentOutput struct {
 	ID 			uuid.UUID `json:"id"`
 	PatientID 	uuid.UUID `json:"patient_id"`
+	Title 		string 	  `json:"title"`
 	FullName    string    `json:"full_name"`
 	Date 		string    `json:"date"`
 	StartTime 	string    `json:"start_time"`
@@ -31,6 +33,7 @@ type AppointmentDetails struct {
 type PatientAppointmentOutput struct {
 	ID 				uuid.UUID `json:"id"`
 	AdminID 		uuid.UUID `json:"admin_id"`
+	Title 			string `json:"title"`
 	FullName 		string `json:"full_name"`
 	Date 			string `json:"date"`
 	StartTime 		string `json:"start_time"`

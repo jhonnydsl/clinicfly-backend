@@ -57,7 +57,7 @@ func (r *AdminRepository) FindAdminIDBySlug(ctx context.Context, slug string) (u
 }
 
 func (r *AdminRepository) CreateAppointment(ctx context.Context, input dtos.AppointmentInput, parsedDate, start, end time.Time, clientID uuid.UUID) (uuid.UUID, error) {
-	query := `INSERT INTO appointments (client_id, patient_id, date, start_time, end_time, status)
+	query := `INSERT INTO appointments (client_id, patient_id, title, date, start_time, end_time, status)
 	VALUES ($1, $2, $3, $4, $5, 'scheduled')
 	RETURNING id;`
 
@@ -68,6 +68,7 @@ func (r *AdminRepository) CreateAppointment(ctx context.Context, input dtos.Appo
 		query,
 		clientID,
 		input.PatientID,
+		input.Title,
 		parsedDate,
 		start,
 		end,
@@ -81,7 +82,7 @@ func (r *AdminRepository) CreateAppointment(ctx context.Context, input dtos.Appo
 }
 
 func (r *AdminRepository) GetAllAppointments(ctx context.Context, adminID uuid.UUID, status string, page, limit int) ([]dtos.AppointmentOutput, int, error) {
-	query := `SELECT a.id, a.patient_id, p.full_name, a.date, a.start_time, a.end_time, a.status
+	query := `SELECT a.id, a.patient_id, a.title, p.full_name, a.date, a.start_time, a.end_time, a.status
 	FROM appointments a
 	JOIN patients p ON p.id = a.patient_id
 	WHERE a.client_id = $1
@@ -129,6 +130,7 @@ func (r *AdminRepository) GetAllAppointments(ctx context.Context, adminID uuid.U
 		var (
 			id uuid.UUID
 			patientID uuid.UUID
+			title string
 			fullName string
 			date time.Time
 			startTime time.Time
@@ -136,7 +138,7 @@ func (r *AdminRepository) GetAllAppointments(ctx context.Context, adminID uuid.U
 			status string
 		)
 
-		err := rows.Scan(&id, &patientID, &fullName, &date, &startTime, &endTime, &status)
+		err := rows.Scan(&id, &patientID, &title, &fullName, &date, &startTime, &endTime, &status)
 		if err != nil {
 			utils.LogError("getAppointments repository (scan error)", err)
 			return nil, 0, utils.InternalServerError("error fetching appointments")
@@ -146,6 +148,7 @@ func (r *AdminRepository) GetAllAppointments(ctx context.Context, adminID uuid.U
 			ID: id,
 			PatientID: patientID,
 			FullName: fullName,
+			Title: title,
 			Date: date.Format("2006-01-02"),
 			StartTime: startTime.Format("15:04"),
 			EndTime: endTime.Format("15:04"),
