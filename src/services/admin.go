@@ -23,6 +23,10 @@ type AdminService struct {
 }
 
 func (service *AdminService) AuditAppointmentCreation(ctx context.Context, actorID, appointmentID uuid.UUID, actorRole, ipAddress, userAgent string) {
+	if service.AuditService == nil {
+		return
+	}
+	
 	err := service.AuditService.CreateAuditLog(ctx, dtos.AuditLogInput{
         ActorID:      &actorID,
         ActorRole:    &actorRole,

@@ -268,6 +268,7 @@ func TestCreateAppointmentIntegration(t *testing.T) {
 
 	appointmentBody := fmt.Sprintf(`{
 		"patient_id": "%s",
+		"title": "teste",
 		"date": "2026-09-07",
 		"start_time": "08:00",
 		"end_time": "09:00"
@@ -359,6 +360,7 @@ func TestCreateAppointmentOverlapIntegration(t *testing.T) {
 
 	firtAppointmentBody := fmt.Sprintf(`{
 		"patient_id": "%s",
+		"title": "teste",
 		"date": "2026-09-07",
 		"start_time": "08:00",
 		"end_time": "09:00"
@@ -371,6 +373,7 @@ func TestCreateAppointmentOverlapIntegration(t *testing.T) {
 
 	secondAppointmentBody := fmt.Sprintf(`{
 		"patient_id": "%s",
+		"title": "teste",
 		"date": "2026-09-07",
 		"start_time": "08:30",
 		"end_time": "09:30"

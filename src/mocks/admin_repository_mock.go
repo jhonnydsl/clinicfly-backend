@@ -171,4 +171,6 @@ func (m *MockAdminRepository) GetPatientAppointmentHistory(
 	ctx context.Context,
 	adminID, patientID uuid.UUID,
 	page, limit int,
-) ([]dtos.AppointmentOutput, int, error)
+) ([]dtos.AppointmentOutput, int, error) {
+	return nil, 0, nil
+}

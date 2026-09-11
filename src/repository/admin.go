@@ -58,7 +58,7 @@ func (r *AdminRepository) FindAdminIDBySlug(ctx context.Context, slug string) (u
 
 func (r *AdminRepository) CreateAppointment(ctx context.Context, input dtos.AppointmentInput, parsedDate, start, end time.Time, clientID uuid.UUID) (uuid.UUID, error) {
 	query := `INSERT INTO appointments (client_id, patient_id, title, date, start_time, end_time, status)
-	VALUES ($1, $2, $3, $4, $5, 'scheduled')
+	VALUES ($1, $2, $3, $4, $5, $6, 'scheduled')
 	RETURNING id;`
 
 	var id uuid.UUID

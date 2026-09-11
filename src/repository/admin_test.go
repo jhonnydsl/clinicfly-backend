@@ -30,6 +30,7 @@ func createAppointmentRows(appointmentID, patientID uuid.UUID, fullName, status 
 	return sqlmock.NewRows([]string{
 		"id",
 		"patient_id",
+		"title",
 		"full_name",
 		"date",
 		"start_time",
@@ -38,6 +39,7 @@ func createAppointmentRows(appointmentID, patientID uuid.UUID, fullName, status 
 	}).AddRow(
 		appointmentID,
 		patientID,
+		"Teste",
 		fullName,
 		time.Date(2026, 8, 28, 0, 0, 0, 0, time.UTC),
 		time.Date(2026, 8, 28, 8, 0, 0, 0, time.UTC),
@@ -83,7 +85,7 @@ func TestGetAllAppointmentsSuccess(t *testing.T) {
 
 	rows := createAppointmentRows(appointmentID, patientID, "Jhonny Lima", "scheduled")
 
-	mock.ExpectQuery(`SELECT a\.id, a\.patient_id, p\.full_name, a\.date, a\.start_time, a\.end_time, a\.status`).WithArgs(adminID, 10, 0).WillReturnRows(rows)
+	mock.ExpectQuery(`SELECT a\.id, a\.patient_id, a\.title, p\.full_name, a\.date, a\.start_time, a\.end_time, a\.status`).WithArgs(adminID, 10, 0).WillReturnRows(rows)
 
 	repo := &AdminRepository{}
 
@@ -127,7 +129,7 @@ func TestGetAllAppointmentsWithStatus(t *testing.T) {
 
 	rows := createAppointmentRows(appointmentID, patientID, "Jhonny Lima", "scheduled")
 
-	mock.ExpectQuery(`SELECT a\.id, a\.patient_id, p\.full_name, a\.date, a\.start_time, a\.end_time, a\.status`).WithArgs(adminID, status, 10, 0).WillReturnRows(rows)
+	mock.ExpectQuery(`SELECT a\.id, a\.patient_id, a\.title, p\.full_name, a\.date, a\.start_time, a\.end_time, a\.status`).WithArgs(adminID, status, 10, 0).WillReturnRows(rows)
 
 	repo := &AdminRepository{}
 
